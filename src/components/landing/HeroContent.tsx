@@ -1,16 +1,20 @@
 export default function HeroContent() {
   return (
     <>
-      <p className="text-green-600 font-semibold mb-3">
-        AI Powered Urban Farming Platform
-      </p>
+      <div className="inline-flex items-center rounded-full bg-green-100 px-4 py-2 text-green-700 font-medium mb-6">
+        🤖 AI Powered Smart Agriculture
+      </div>
 
       <h1 className="text-6xl font-bold leading-tight">
-        Intelligent
+
+        Intelligent Autonomous
+
         <br />
-        Autonomous
-        <br />
-        Terrace Farming
+
+        <span className="text-green-600">
+          Terrace Farming
+        </span>
+
       </h1>
 
       <p className="text-gray-600 mt-6 max-w-xl text-lg">
