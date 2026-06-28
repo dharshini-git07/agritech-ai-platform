@@ -17,13 +17,19 @@ export default function Navbar() {
       </div>
 
       <div className="flex gap-3">
-        <Button variant="outline">
-          Login
-        </Button>
 
-        <Button>
-          Get Started
-        </Button>
+        <Link href="/role-selection">
+          <Button variant="outline">
+            Login
+          </Button>
+        </Link>
+
+        <Link href="/role-selection">
+          <Button>
+            Get Started
+          </Button>
+        </Link>
+
       </div>
     </nav>
   );
