@@ -10,26 +10,45 @@ export default function Sidebar() {
         🌱 AgriTech AI
       </h2>
 
-      <nav className="space-y-4">
+      <nav className="space-y-5">
 
         <Link href="/dashboard" className="block hover:text-green-200">
           Dashboard
         </Link>
 
-        <Link href="/dashboard/terrace" className="block hover:text-green-200">
-          Terrace Analysis
+        <Link
+          href="/dashboard/terrace-planner"
+          className="block hover:text-green-200"
+        >
+          🏠 Terrace Planner
         </Link>
 
-        <Link href="/dashboard/recommendation" className="block hover:text-green-200">
-          AI Recommendation
+        <Link
+          href="/dashboard/crop-analysis"
+          className="block hover:text-green-200"
+        >
+          🌱 Crop Health Analysis
         </Link>
 
-        <Link href="/dashboard/hydroponics" className="block hover:text-green-200">
-          Hydroponics
+        <Link
+          href="/dashboard/history"
+          className="block hover:text-green-200"
+        >
+          📜 Analysis History
         </Link>
 
-        <Link href="/marketplace" className="block hover:text-green-200">
-          Marketplace
+        <Link
+          href="/dashboard/hydroponics"
+          className="block hover:text-green-200"
+        >
+          💧 Hydroponics
+        </Link>
+
+        <Link
+          href="/marketplace"
+          className="block hover:text-green-200"
+        >
+          🛒 Marketplace
         </Link>
 
       </nav>
