@@ -11,16 +11,22 @@ export async function saveTerraceAnalysis(analysis: TerraceAnalysis) {
 
   await addDoc(collection(db, "terrace_analysis"), {
     uid: user.uid,
+    analysisMode: analysis.analysisMode,
     terraceArea: analysis.terraceArea,
     usableArea: analysis.usableArea,
     sunlight: analysis.sunlight,
     drainage: analysis.drainage,
     layout: analysis.layout,
-    cropSuggestions: analysis.cropSuggestions,
+    recommendedCrops: analysis.recommendedCrops,
+    growBagCount: analysis.growBagCount,
+    hydroponicsSuitability: analysis.hydroponicsSuitability,
+    waterTankPlacement: analysis.waterTankPlacement,
     estimatedCost: analysis.estimatedCost,
-    recommendation: analysis.recommendation,
+    shoppingRecommendations: analysis.shoppingRecommendations,
+    maintenanceTips: analysis.maintenanceTips,
     analysisSummary: analysis.analysisSummary,
     confidence: analysis.confidence,
+    confidenceReason: analysis.confidenceReason,
     createdAt: serverTimestamp(),
   });
 }

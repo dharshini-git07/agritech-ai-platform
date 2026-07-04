@@ -13,8 +13,20 @@ export default function TerraceUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
+  const [analysisMode, setAnalysisMode] = useState<"image" | "manual" | "hybrid">("hybrid");
+
+  // Form states
+  const [length, setLength] = useState("");
+  const [width, setWidth] = useState("");
+  const [floor, setFloor] = useState("");
+  const [city, setCity] = useState("");
+  const [budget, setBudget] = useState("");
+  const [preference, setPreference] = useState("Mixed");
+
+  // Visual state
   const [image, setImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [analysis, setAnalysis] = useState<TerraceAnalysis | null>(null);
@@ -44,9 +56,18 @@ export default function TerraceUploader() {
   };
 
   const handleAnalyze = async () => {
-    if (!selectedFile) {
-      alert(t("selectImageAlert"));
-      return;
+    // Mode specific validations
+    if (analysisMode === "image" || analysisMode === "hybrid") {
+      if (!selectedFile) {
+        alert(t("selectImageAlert"));
+        return;
+      }
+    }
+    if (analysisMode === "manual" || analysisMode === "hybrid") {
+      if (!length || !width || !floor || !city || !budget) {
+        alert("Please fill in all manual planning fields first.");
+        return;
+      }
     }
 
     setLoading(true);
@@ -54,16 +75,30 @@ export default function TerraceUploader() {
     setShowResult(false);
 
     try {
-      const base64Image = await fileToBase64(selectedFile);
+      let base64Image = null;
+      if (selectedFile && (analysisMode === "image" || analysisMode === "hybrid")) {
+        base64Image = await fileToBase64(selectedFile);
+      }
+
+      const payload = {
+        image: base64Image,
+        manualDetails: {
+          length,
+          width,
+          floor,
+          city,
+          budget,
+          preference,
+        },
+        mode: analysisMode,
+      };
 
       const response = await fetch("/api/terrace-analysis", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          image: base64Image,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -101,43 +136,213 @@ export default function TerraceUploader() {
 
   return (
     <div className="space-y-8">
-      <div
-        onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-green-400 rounded-3xl p-12 text-center cursor-pointer hover:bg-green-50"
-      >
-        <h2 className="text-2xl font-bold">{t("uploadTerraceImage")}</h2>
+      {/* Choose Analysis Mode Selector */}
+      <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-100 space-y-4">
+        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+          ⚙️ {t("chooseAnalysisMode")}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <label
+            className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition ${
+              analysisMode === "image"
+                ? "border-green-500 bg-green-50/50 text-green-950"
+                : "border-gray-150 hover:bg-gray-50 text-gray-700"
+            }`}
+          >
+            <input
+              type="radio"
+              name="analysisMode"
+              value="image"
+              checked={analysisMode === "image"}
+              onChange={() => {
+                setAnalysisMode("image");
+                setError(null);
+              }}
+              className="accent-green-600 w-4 h-4 cursor-pointer"
+            />
+            <span className="font-semibold text-sm">{t("imageAnalysis")}</span>
+          </label>
 
-        <p className="text-gray-500 mt-3">{t("uploadTerraceDesc")}</p>
+          <label
+            className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition ${
+              analysisMode === "manual"
+                ? "border-green-500 bg-green-50/50 text-green-950"
+                : "border-gray-150 hover:bg-gray-50 text-gray-700"
+            }`}
+          >
+            <input
+              type="radio"
+              name="analysisMode"
+              value="manual"
+              checked={analysisMode === "manual"}
+              onChange={() => {
+                setAnalysisMode("manual");
+                setError(null);
+              }}
+              className="accent-green-600 w-4 h-4 cursor-pointer"
+            />
+            <span className="font-semibold text-sm">{t("manualPlanning")}</span>
+          </label>
+
+          <label
+            className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition ${
+              analysisMode === "hybrid"
+                ? "border-green-500 bg-green-50/50 text-green-950"
+                : "border-gray-150 hover:bg-gray-50 text-gray-700"
+            }`}
+          >
+            <input
+              type="radio"
+              name="analysisMode"
+              value="hybrid"
+              checked={analysisMode === "hybrid"}
+              onChange={() => {
+                setAnalysisMode("hybrid");
+                setError(null);
+              }}
+              className="accent-green-600 w-4 h-4 cursor-pointer"
+            />
+            <span className="font-semibold text-sm">
+              {t("hybridAnalysis")}
+            </span>
+          </label>
+        </div>
       </div>
 
-      <input
-        hidden
-        type="file"
-        accept="image/*"
-        ref={inputRef}
-        onChange={handleImage}
-      />
+      {/* Manual Details Form */}
+      {(analysisMode === "manual" || analysisMode === "hybrid") && (
+        <div className="bg-white rounded-3xl p-8 shadow-md border border-gray-100 space-y-6">
+          <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3">
+            📏 {t("manualPlanning")} Details
+          </h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                {t("terraceLength")}
+              </label>
+              <input
+                type="number"
+                value={length}
+                onChange={(e) => setLength(e.target.value)}
+                placeholder="e.g. 20"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                {t("terraceWidth")}
+              </label>
+              <input
+                type="number"
+                value={width}
+                onChange={(e) => setWidth(e.target.value)}
+                placeholder="e.g. 15"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                {t("buildingFloor")}
+              </label>
+              <input
+                type="text"
+                value={floor}
+                onChange={(e) => setFloor(e.target.value)}
+                placeholder="e.g. 3rd Floor"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                {t("city")}
+              </label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g. Chennai"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                {t("budget")}
+              </label>
+              <input
+                type="text"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder="e.g. 5000 INR"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                {t("farmingPreference")}
+              </label>
+              <select
+                value={preference}
+                onChange={(e) => setPreference(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 cursor-pointer"
+              >
+                <option value="Soil Farming">{t("soilFarming")}</option>
+                <option value="Hydroponics">{t("hydroponics")}</option>
+                <option value="Mixed">{t("mixedFarming")}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {image && (
-        <>
-          <Image
-            src={image}
-            alt="Terrace"
-            width={900}
-            height={600}
-            className="rounded-3xl shadow-lg"
+      {/* Image Uploader Block */}
+      {(analysisMode === "image" || analysisMode === "hybrid") && (
+        <div className="space-y-6">
+          <div
+            onClick={() => inputRef.current?.click()}
+            className="border-2 border-dashed border-green-400 rounded-3xl p-12 text-center cursor-pointer hover:bg-green-50 transition"
+          >
+            <h2 className="text-2xl font-bold">{t("uploadTerraceImage")}</h2>
+
+            <p className="text-gray-500 mt-3">{t("uploadTerraceDesc")}</p>
+          </div>
+
+          <input
+            hidden
+            type="file"
+            accept="image/*"
+            ref={inputRef}
+            onChange={handleImage}
           />
 
-          <Button className="w-full" onClick={handleAnalyze} disabled={loading}>
-            {loading ? t("analyzingTerraceText") : t("analyzeTerraceButton")}
-          </Button>
-        </>
+          {image && (
+            <div className="mt-4">
+              <Image
+                src={image}
+                alt="Terrace"
+                width={900}
+                height={600}
+                className="rounded-3xl shadow-lg w-full object-cover"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Unified planning buttons */}
+      {!loading && (
+        <Button className="w-full py-6 text-base rounded-2xl cursor-pointer" onClick={handleAnalyze}>
+          {analysisMode === "image"
+            ? t("analyzeTerraceButton")
+            : analysisMode === "manual"
+            ? t("generatePlanButton")
+            : t("generateHybridPlanButton")}
+        </Button>
       )}
 
       {loading && <TerraceLoading />}
 
       {error && (
-        <div className="bg-red-50 text-red-600 rounded-3xl p-6 text-center shadow-md">
+        <div className="bg-red-50 text-red-600 rounded-3xl p-6 text-center shadow-md border border-red-100">
           <p className="font-semibold">
             {analysis ? t("warningLabel") : t("analysisFailedLabel")}
           </p>
