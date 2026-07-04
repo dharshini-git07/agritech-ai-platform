@@ -196,16 +196,6 @@ export default function CustomerPortal() {
               </button>
             )}
             
-            {profile && profile.role === "admin" && (
-              <button
-                onClick={() => router.push("/admin")}
-                className="hidden md:flex items-center gap-1.5 text-xs text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-3.5 py-2 rounded-xl transition font-bold cursor-pointer"
-              >
-                <ShieldAlert size={14} />
-                <span>Go to Admin Approval Panel</span>
-              </button>
-            )}
-
             {profile && (
               <div className="relative" ref={dropdownRef}>
                 {/* Profile Header Button */}

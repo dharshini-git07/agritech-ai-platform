@@ -202,14 +202,6 @@ export default function AdminPortal() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Nav button to customer catalog */}
-            <button
-              onClick={() => router.push("/customer")}
-              className="hidden md:flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3.5 py-2 rounded-xl transition font-bold cursor-pointer"
-            >
-              Browse Shop Catalog
-            </button>
-
             {profile && (
               <div className="relative" ref={dropdownRef}>
                 <button
