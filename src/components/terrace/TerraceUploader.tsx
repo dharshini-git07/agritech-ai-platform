@@ -5,35 +5,91 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import TerraceLoading from "./TerraceLoading";
 import TerraceAnalysisCard from "./TerraceAnalysisCard";
+import { TerraceAnalysis } from "@/types/terrace";
 
 export default function TerraceUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [image, setImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [analysis, setAnalysis] = useState<TerraceAnalysis | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
+    setSelectedFile(file);
     setImage(URL.createObjectURL(file));
     setShowResult(false);
+    setError(null);
   };
 
-  const handleAnalyze = () => {
-    setLoading(true);
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+    });
+  };
 
-    setTimeout(() => {
-      setLoading(false);
+  const handleAnalyze = async () => {
+    if (!selectedFile) {
+      alert("Please select an image first.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setShowResult(false);
+
+    try {
+      const base64Image = await fileToBase64(selectedFile);
+
+      const response = await fetch("/api/terrace-analysis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image: base64Image,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to analyze terrace. Please try again.");
+      }
+
+      const data = await response.json();
+
+      let parsedAnalysis: TerraceAnalysis;
+      try {
+        parsedAnalysis = JSON.parse(data.result);
+      } catch (parseErr) {
+        console.error("JSON parsing error:", parseErr);
+        setError("AI returned an invalid response.");
+        return;
+      }
+
+      setAnalysis(parsedAnalysis);
       setShowResult(true);
-    }, 2500);
+    } catch (err: any) {
+      console.error("Terrace analysis failed:", err);
+      setError("Unable to analyze terrace. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="space-y-8">
-
       <div
         onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed border-green-400 rounded-3xl p-12 text-center cursor-pointer hover:bg-green-50"
@@ -68,16 +124,23 @@ export default function TerraceUploader() {
           <Button
             className="w-full"
             onClick={handleAnalyze}
+            disabled={loading}
           >
-            Analyze Terrace
+            {loading ? "Analyzing..." : "Analyze Terrace"}
           </Button>
         </>
       )}
 
       {loading && <TerraceLoading />}
 
-      {showResult && <TerraceAnalysisCard />}
+      {error && (
+        <div className="bg-red-50 text-red-600 rounded-3xl p-6 text-center shadow-md">
+          <p className="font-semibold">⚠️ Analysis Failed</p>
+          <p className="text-sm mt-1">{error}</p>
+        </div>
+      )}
 
+      {showResult && analysis && <TerraceAnalysisCard analysis={analysis} />}
     </div>
   );
 }
