@@ -7,7 +7,7 @@ export async function saveAnalysis(analysis: any) {
   if (!user) return;
 
   await addDoc(collection(db, "crop_analysis"), {
-    userId: user.uid,
+    uid: user.uid,
     ...analysis,
     createdAt: serverTimestamp(),
   });
