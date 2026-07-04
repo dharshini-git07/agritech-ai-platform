@@ -20,16 +20,38 @@ import {
   Phone,
   MapPin,
   Star,
-  Plus
+  Plus,
+  Heart,
+  Eye,
+  Trash,
+  Minus,
+  CreditCard,
+  ClipboardList,
+  Bookmark
 } from "lucide-react";
 import { Order, OrderStatus } from "@/types/order";
-import { getSellerOrders, updateOrderStatus, cancelOrder } from "@/services/orderService";
+import { getSellerOrders, updateOrderStatus, cancelOrder, getCustomerOrders } from "@/services/orderService";
 import OrderCard from "@/components/marketplace/OrderCard";
+import { useMarketplace } from "@/components/marketplace/MarketplaceContext";
+import MarketStorefront from "@/components/marketplace/MarketStorefront";
+import CheckoutModal from "@/components/marketplace/CheckoutModal";
 
-type SubView = "products" | "profile" | "orders";
+type SubView = "products" | "profile" | "orders" | "browse" | "cart" | "wishlist" | "my_orders";
 
 export default function SellerDashboard() {
   const { t } = useLanguage();
+  const { 
+    cartItems, 
+    wishlistIds, 
+    products: allProducts, 
+    updateCartQuantity, 
+    removeCartItem, 
+    clearCart, 
+    addToCart,
+    toggleWishlist,
+    refreshProducts
+  } = useMarketplace();
+
   const [loading, setLoading] = useState(true);
   const [isSeller, setIsSeller] = useState(false);
   const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
@@ -41,6 +63,11 @@ export default function SellerDashboard() {
   // Orders Management
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Buyer Orders
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [loadingCustomerOrders, setLoadingCustomerOrders] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   // View controllers
   const [activeTab, setActiveTab] = useState<SubView>("products");
@@ -67,9 +94,11 @@ export default function SellerDashboard() {
           setSellerProfile(data.sellerProfile as SellerProfile);
           await loadSellerProducts(uid);
           await loadSellerOrdersData(uid);
+          await loadCustomerOrdersData(uid);
         } else {
           setIsSeller(false);
           setSellerProfile(null);
+          await loadCustomerOrdersData(uid);
         }
       }
     } catch (err) {
@@ -77,6 +106,42 @@ export default function SellerDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadCustomerOrdersData = async (uid: string) => {
+    setLoadingCustomerOrders(true);
+    try {
+      const list = await getCustomerOrders(uid);
+      setCustomerOrders(list);
+    } catch (err) {
+      console.error("Error loading customer orders:", err);
+    } finally {
+      setLoadingCustomerOrders(false);
+    }
+  };
+
+  const handleCustomerOrderCancel = async (orderId: string) => {
+    try {
+      await cancelOrder(orderId);
+      alert("Order cancelled successfully.");
+      const user = auth.currentUser;
+      if (user) {
+        await loadCustomerOrdersData(user.uid);
+        await refreshProducts(); // Reload global context products
+      }
+    } catch (err: any) {
+      alert("Failed to cancel order: " + err.message);
+    }
+  };
+
+  const handleCheckoutSuccess = async () => {
+    setShowCheckoutModal(false);
+    const user = auth.currentUser;
+    if (user) {
+      await loadCustomerOrdersData(user.uid);
+      await refreshProducts();
+    }
+    setActiveTab("my_orders"); // Switch to buyer orders list on success
   };
 
   const loadSellerProducts = async (uid: string) => {
@@ -236,44 +301,107 @@ export default function SellerDashboard() {
       )}
 
       {/* Tabs selector */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-gray-200 overflow-x-auto select-none no-scrollbar shrink-0">
         <button
           onClick={() => setActiveTab("products")}
-          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
             activeTab === "products"
               ? "border-green-700 text-green-700"
               : "border-transparent text-gray-500 hover:text-gray-800"
           }`}
         >
-          <Layers size={16} />
-          <span>{t("myProducts")}</span>
+          <Layers size={14} />
+          <span>My Products (Sell)</span>
         </button>
         <button
           onClick={() => setActiveTab("orders")}
-          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
             activeTab === "orders"
               ? "border-green-700 text-green-700"
               : "border-transparent text-gray-500 hover:text-gray-800"
           }`}
         >
-          <ShoppingBag size={16} />
-          <span>My Orders</span>
+          <ShoppingBag size={14} />
+          <span>Incoming Orders</span>
           {orders.filter(o => o.orderStatus === "Pending").length > 0 && (
-            <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
-              {orders.filter(o => o.orderStatus === "Pending").length} pending
+            <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+              {orders.filter(o => o.orderStatus === "Pending").length}
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab("profile")}
-          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
             activeTab === "profile"
               ? "border-green-700 text-green-700"
               : "border-transparent text-gray-500 hover:text-gray-800"
           }`}
         >
-          <Settings2 size={16} />
-          <span>Manage Store Profile</span>
+          <Settings2 size={14} />
+          <span>Store Settings</span>
+        </button>
+
+        {/* Crossover Buying Tabs */}
+        <div className="h-6 w-px bg-gray-200 self-center mx-2 shrink-0" />
+        
+        <button
+          onClick={() => setActiveTab("browse")}
+          className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
+            activeTab === "browse"
+              ? "border-green-700 text-green-700"
+              : "border-transparent text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          <Store size={14} />
+          <span>Browse Marketplace</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("cart")}
+          className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
+            activeTab === "cart"
+              ? "border-green-700 text-green-700"
+              : "border-transparent text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          <ShoppingBag size={14} />
+          <span>My Cart</span>
+          {cartItems.length > 0 && (
+            <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+              {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("wishlist")}
+          className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
+            activeTab === "wishlist"
+              ? "border-green-700 text-green-700"
+              : "border-transparent text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          <Heart size={14} />
+          <span>Wishlist</span>
+          {wishlistIds.length > 0 && (
+            <span className="bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+              {wishlistIds.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("my_orders")}
+          className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
+            activeTab === "my_orders"
+              ? "border-green-700 text-green-700"
+              : "border-transparent text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          <ClipboardList size={14} />
+          <span>My Purchases</span>
+          {customerOrders.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length > 0 && (
+            <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+              {customerOrders.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length} active
+            </span>
+          )}
         </button>
       </div>
 
@@ -354,6 +482,246 @@ export default function SellerDashboard() {
         {activeTab === "profile" && (
           <SellerForm onSuccess={() => auth.currentUser && checkSellerStatus(auth.currentUser.uid)} />
         )}
+
+        {activeTab === "browse" && <MarketStorefront />}
+
+        {activeTab === "cart" && (() => {
+          const subtotal = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+          const gst = subtotal * 0.05; // 5% GST
+          
+          // Calculate delivery per seller
+          const groupedBySeller: { [sellerId: string]: number } = {};
+          for (const item of cartItems) {
+            groupedBySeller[item.product.sellerId] = (groupedBySeller[item.product.sellerId] || 0) + item.product.price * item.quantity;
+          }
+          let totalDelivery = 0;
+          for (const sId in groupedBySeller) {
+            if (groupedBySeller[sId] < 500) {
+              totalDelivery += 50;
+            }
+          }
+          const total = subtotal + gst + totalDelivery;
+
+          return (
+            <div className="max-w-5xl mx-auto space-y-6">
+              <h2 className="text-2xl font-bold text-gray-800">Your Shopping Cart</h2>
+
+              {cartItems.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-3xl border border-gray-155 text-gray-400 space-y-4 max-w-xl mx-auto">
+                  <ShoppingBag size={48} className="mx-auto text-gray-300 opacity-80" />
+                  <h3 className="font-bold text-lg text-gray-700">Your cart is empty</h3>
+                  <p className="text-sm">
+                    Browse the Namma Kadai catalog to discover seeds, organic compost, hydroponics modules, and fresh vegetables.
+                  </p>
+                  <Button
+                    onClick={() => setActiveTab("browse")}
+                    className="bg-green-700 text-white rounded-xl font-bold px-6"
+                  >
+                    Start Shopping
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                  {/* Cart items list */}
+                  <div className="flex-1 w-full bg-white rounded-3xl border border-gray-150 p-6 space-y-4 shadow-sm">
+                    <div className="flex justify-between items-center border-b pb-4">
+                      <span className="font-bold text-gray-700 text-sm">Cart Items ({cartItems.length})</span>
+                      <button
+                        onClick={clearCart}
+                        className="text-xs text-red-650 hover:text-red-700 font-bold transition flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash size={12} /> Clear Cart
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-gray-100">
+                      {cartItems.map((item) => (
+                        <div key={item.product.id} className="py-4 flex gap-4 items-center">
+                          <img
+                            src={item.product.images?.[0]}
+                            alt={item.product.productName}
+                            className="w-16 h-16 object-cover rounded-xl border shrink-0 bg-white"
+                          />
+                          
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-800 text-sm truncate">
+                              {item.product.productName}
+                            </h4>
+                            <p className="text-xs text-gray-400 font-medium capitalize mt-0.5">
+                              Seller: {item.product.businessName} ({item.product.sellerType})
+                            </p>
+                            <p className="text-xs text-gray-400 font-medium">
+                              Unit Price: ₹{item.product.price.toFixed(2)}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-6 shrink-0">
+                            {/* Quantity controls */}
+                            <div className="flex items-center border border-gray-205 rounded-lg overflow-hidden shrink-0">
+                              <button
+                                onClick={() => updateCartQuantity(item.product.id!, item.quantity - 1)}
+                                className="p-1 hover:bg-gray-50 text-gray-500 cursor-pointer"
+                              >
+                                <Minus size={12} />
+                              </button>
+                              <span className="px-2.5 text-xs font-bold text-gray-700 w-6 text-center select-none">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  if (item.quantity < item.product.quantity) {
+                                    updateCartQuantity(item.product.id!, item.quantity + 1);
+                                  } else {
+                                    alert("Cannot exceed available stock limit!");
+                                  }
+                                }}
+                                className="p-1 hover:bg-gray-50 text-gray-500 cursor-pointer"
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+
+                            <span className="font-extrabold text-green-750 text-sm w-20 text-right">
+                              ₹{(item.product.price * item.quantity).toFixed(2)}
+                            </span>
+
+                            <button
+                              onClick={() => removeCartItem(item.product.id!)}
+                              className="text-gray-400 hover:text-red-500 transition cursor-pointer p-1"
+                            >
+                              <Trash size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Summary Block */}
+                  <div className="w-full lg:w-80 bg-white rounded-3xl border border-gray-150 p-6 space-y-4 shadow-sm shrink-0">
+                    <h3 className="font-bold text-gray-800 text-base border-b pb-3">Checkout Details</h3>
+                    
+                    <div className="space-y-2.5 text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Cart Subtotal</span>
+                        <span className="font-semibold text-gray-850">₹{subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Taxes (5% GST)</span>
+                        <span className="font-semibold text-gray-850">₹{gst.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Delivery Fee</span>
+                        <span className="font-semibold text-gray-855">
+                          {totalDelivery === 0 ? <span className="text-green-600 font-bold">FREE</span> : `₹${totalDelivery.toFixed(2)}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center border-t pt-3 font-extrabold text-gray-800">
+                      <span>Total Price</span>
+                      <span className="text-xl text-green-800">₹{total.toFixed(2)}</span>
+                    </div>
+
+                    <Button
+                      onClick={() => setShowCheckoutModal(true)}
+                      className="w-full py-3 bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 mt-4"
+                    >
+                      <CreditCard size={18} />
+                      <span>Proceed to Checkout</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {activeTab === "wishlist" && (() => {
+          const wishlistedProducts = allProducts.filter((p) => wishlistIds.includes(p.id!));
+          const handleMoveToCart = async (product: any) => {
+            await addToCart(product);
+            await toggleWishlist(product.id!); // Remove from wishlist on move to cart
+          };
+
+          return (
+            <div className="max-w-5xl mx-auto space-y-6">
+              <h2 className="text-2xl font-bold text-gray-800">Your Wishlist</h2>
+
+              {wishlistedProducts.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-3xl border border-gray-150 text-gray-400 space-y-4 max-w-xl mx-auto shadow-sm">
+                  <Heart size={48} className="mx-auto text-gray-300 opacity-80" />
+                  <h3 className="font-bold text-lg text-gray-700">Wishlist is empty</h3>
+                  <p className="text-sm">
+                    Favorite products by clicking the heart button on listing cards in the shop catalog.
+                  </p>
+                  <Button
+                    onClick={() => setActiveTab("browse")}
+                    className="bg-green-700 text-white rounded-xl font-bold px-6"
+                  >
+                    Go Browse Store
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {wishlistedProducts.map((product) => (
+                    <div key={product.id} className="relative group">
+                      <ProductCard
+                        product={product}
+                      />
+                      
+                      {/* Move to Cart overlay control */}
+                      <div className="absolute top-2 left-2 z-20">
+                        <Button
+                          size="xs"
+                          onClick={() => handleMoveToCart(product)}
+                          className="bg-green-600 hover:bg-green-700 text-white font-bold text-[10px] rounded-lg px-2 py-1 flex items-center gap-1 shadow-md"
+                        >
+                          <ShoppingBag size={11} /> Move to Cart
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {activeTab === "my_orders" && (
+          <div className="max-w-5xl mx-auto space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">My Orders & Shipments</h2>
+            
+            {loadingCustomerOrders ? (
+              <div className="text-center py-10 text-gray-500">Loading orders...</div>
+            ) : customerOrders.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-3xl border border-gray-150 text-gray-400 space-y-4 max-w-xl mx-auto shadow-sm">
+                <ClipboardList size={48} className="mx-auto text-gray-300 opacity-80" />
+                <h3 className="font-bold text-lg text-gray-700">No orders placed yet</h3>
+                <p className="text-sm">
+                  Go browse our marketplace catalog to order fresh farm produce, soil inputs, watering systems, or hydroponics equipment.
+                </p>
+                <Button
+                  onClick={() => setActiveTab("browse")}
+                  className="bg-green-700 text-white rounded-xl font-bold px-6"
+                >
+                  Browse Marketplace
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {customerOrders.map((ord) => (
+                  <OrderCard
+                    key={ord.id}
+                    order={ord}
+                    role="customer"
+                    onCancel={handleCustomerOrderCancel}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Product Form Modal overlay */}
@@ -369,6 +737,14 @@ export default function SellerDashboard() {
           />
         </div>
       )}
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        cartItems={cartItems}
+        onSuccess={handleCheckoutSuccess}
+      />
     </div>
   );
 }

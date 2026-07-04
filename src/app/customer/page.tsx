@@ -12,6 +12,12 @@ import ProductCard from "@/components/marketplace/ProductCard";
 import ProductDetail from "@/components/marketplace/ProductDetail";
 import SellerProfileModal from "@/components/marketplace/SellerProfileModal";
 import { useLanguage, Language } from "@/components/common/LanguageContext";
+import SellerForm from "@/components/marketplace/SellerForm";
+import ProductForm from "@/components/marketplace/ProductForm";
+import { SellerProfile, Product as SellerProduct } from "@/types/marketplace";
+import { getProducts, deleteProduct } from "@/services/marketplaceService";
+import { getSellerOrders, updateOrderStatus } from "@/services/orderService";
+import { Layers, Settings2 } from "lucide-react";
 import { 
   User, 
   LogOut, 
@@ -34,7 +40,7 @@ import { Order, OrderStatus } from "@/types/order";
 import { getCustomerOrders, cancelOrder } from "@/services/orderService";
 import OrderCard from "@/components/marketplace/OrderCard";
 
-type CustomerTab = "browse" | "cart" | "wishlist" | "recent" | "orders";
+type CustomerTab = "browse" | "cart" | "wishlist" | "recent" | "orders" | "seller_center";
 
 export default function CustomerPortal() {
   const router = useRouter();
@@ -64,6 +70,17 @@ export default function CustomerPortal() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
+  // Seller Center States
+  const [isSeller, setIsSeller] = useState(false);
+  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
+  const [sellerProducts, setSellerProducts] = useState<SellerProduct[]>([]);
+  const [loadingSellerProducts, setLoadingSellerProducts] = useState(false);
+  const [incomingOrders, setIncomingOrders] = useState<Order[]>([]);
+  const [loadingIncomingOrders, setLoadingIncomingOrders] = useState(false);
+  const [sellerActiveTab, setSellerActiveTab] = useState<"products" | "orders" | "profile">("products");
+  const [showSellerProductForm, setShowSellerProductForm] = useState(false);
+  const [editingSellerProduct, setEditingSellerProduct] = useState<SellerProduct | undefined>(undefined);
+
   // Modal controls
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
@@ -87,6 +104,14 @@ export default function CustomerPortal() {
               role: data.role || "customer",
               email: data.email || user.email || "",
             });
+            
+            const isSel = !!data.isSeller;
+            setIsSeller(isSel);
+            setSellerProfile(data.sellerProfile || null);
+            if (isSel) {
+              await loadSellerProducts(user.uid);
+              await loadIncomingOrders(user.uid);
+            }
             await loadCustomerOrdersData(user.uid);
           } else {
             setProfile({
@@ -104,6 +129,93 @@ export default function CustomerPortal() {
 
     return () => unsubscribe();
   }, [router]);
+
+  const loadSellerProducts = async (uid: string) => {
+    setLoadingSellerProducts(true);
+    try {
+      const list = await getProducts({ sellerId: uid });
+      setSellerProducts(list);
+    } catch (err) {
+      console.error("Error loading customer-seller products:", err);
+    } finally {
+      setLoadingSellerProducts(false);
+    }
+  };
+
+  const loadIncomingOrders = async (uid: string) => {
+    setLoadingIncomingOrders(true);
+    try {
+      const list = await getSellerOrders(uid);
+      setIncomingOrders(list);
+    } catch (err) {
+      console.error("Error loading customer-seller incoming orders:", err);
+    } finally {
+      setLoadingIncomingOrders(false);
+    }
+  };
+
+  const handleIncomingOrderStatusChange = async (orderId: string, status: OrderStatus) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      alert(`Order status updated to: ${status}`);
+      const user = auth.currentUser;
+      if (user) {
+        await loadIncomingOrders(user.uid);
+        await loadSellerProducts(user.uid);
+      }
+    } catch (err: any) {
+      alert("Failed to update status: " + err.message);
+    }
+  };
+
+  const handleIncomingOrderCancel = async (orderId: string) => {
+    try {
+      await cancelOrder(orderId);
+      alert("Order cancelled successfully.");
+      const user = auth.currentUser;
+      if (user) {
+        await loadIncomingOrders(user.uid);
+        await loadSellerProducts(user.uid);
+      }
+    } catch (err: any) {
+      alert("Failed to cancel order: " + err.message);
+    }
+  };
+
+  const handleSellerProductDelete = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this listing?")) return;
+    try {
+      await deleteProduct(productId);
+      alert("Listing deleted successfully.");
+      const user = auth.currentUser;
+      if (user) await loadSellerProducts(user.uid);
+    } catch (err: any) {
+      alert("Failed to delete listing: " + err.message);
+    }
+  };
+
+  const handleSellerProductFormSuccess = async () => {
+    setShowSellerProductForm(false);
+    setEditingSellerProduct(undefined);
+    const user = auth.currentUser;
+    if (user) {
+      await loadSellerProducts(user.uid);
+    }
+  };
+
+  const handleBecomeSellerSuccess = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      const docSnap = await getDoc(doc(db, "users", user.uid));
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setIsSeller(true);
+        setSellerProfile(data.sellerProfile || null);
+        await loadSellerProducts(user.uid);
+        await loadIncomingOrders(user.uid);
+      }
+    }
+  };
 
   const loadCustomerOrdersData = async (uid: string) => {
     setLoadingOrders(true);
@@ -338,6 +450,26 @@ export default function CustomerPortal() {
           >
             <Eye size={16} />
             <span>Recently Viewed</span>
+          </button>
+
+          {/* Seller Center Tab */}
+          <div className="h-6 w-px bg-gray-200 self-center mx-2 shrink-0" />
+          
+          <button
+            onClick={() => setActiveTab("seller_center")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+              activeTab === "seller_center"
+                ? "border-green-700 text-green-700"
+                : "border-transparent text-gray-500 hover:text-gray-855"
+            }`}
+          >
+            <Store size={16} />
+            <span>Seller Center</span>
+            {isSeller && incomingOrders.filter(o => o.orderStatus === "Pending").length > 0 && (
+              <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                {incomingOrders.filter(o => o.orderStatus === "Pending").length} pending
+              </span>
+            )}
           </button>
         </div>
 
@@ -626,6 +758,175 @@ export default function CustomerPortal() {
               </div>
             </div>
           )}
+
+          {/* TAB 5: SELLER CENTER */}
+          {activeTab === "seller_center" && (
+            <div className="space-y-6 max-w-6xl mx-auto">
+              {!isSeller ? (
+                <div className="max-w-3xl mx-auto space-y-6 bg-white border border-gray-150 p-8 rounded-3xl shadow-sm">
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-800">Become a Seller on Namma Kadai</h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Register your home nursery or terrace garden business to start selling seeds, tools, organic compost, or fresh produce directly to other local growers.
+                    </p>
+                  </div>
+                  <SellerForm onSuccess={handleBecomeSellerSuccess} />
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Shop Details Header */}
+                  <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-gray-800">{sellerProfile?.businessName}</h2>
+                        <span className="text-[10px] bg-green-100 border border-green-200 text-green-850 font-bold px-2 py-0.5 rounded-full capitalize">
+                          {sellerProfile?.sellerType}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 font-medium">{sellerProfile?.description}</p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {sellerActiveTab === "products" && sellerProfile?.verificationStatus === "approved" && (
+                        <Button
+                          onClick={() => {
+                            setEditingSellerProduct(undefined);
+                            setShowSellerProductForm(true);
+                          }}
+                          className="bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold text-xs flex items-center gap-1.5"
+                        >
+                          <Plus size={14} /> Add Product
+                        </Button>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Verification:</span>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border capitalize ${
+                          sellerProfile?.verificationStatus === "approved"
+                            ? "bg-green-50 border-green-200 text-green-800"
+                            : sellerProfile?.verificationStatus === "rejected"
+                            ? "bg-red-50 border-red-200 text-red-800"
+                            : "bg-amber-50 border-amber-200 text-amber-800"
+                        }`}>
+                          {sellerProfile?.verificationStatus}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sub Tabs Selector */}
+                  <div className="flex border-b border-gray-200 gap-4 shrink-0">
+                    <button
+                      onClick={() => setSellerActiveTab("products")}
+                      className={`flex items-center gap-1.5 pb-2 border-b-2 font-bold text-xs transition cursor-pointer ${
+                        sellerActiveTab === "products"
+                          ? "border-green-750 text-green-755 border-green-700"
+                          : "border-transparent text-gray-500"
+                      }`}
+                    >
+                      <Layers size={14} />
+                      <span>My Products ({sellerProducts.length})</span>
+                    </button>
+                    <button
+                      onClick={() => setSellerActiveTab("orders")}
+                      className={`flex items-center gap-1.5 pb-2 border-b-2 font-bold text-xs transition cursor-pointer ${
+                        sellerActiveTab === "orders"
+                          ? "border-green-750 text-green-755 border-green-700"
+                          : "border-transparent text-gray-500"
+                      }`}
+                    >
+                      <ShoppingBag size={14} />
+                      <span>Incoming Orders ({incomingOrders.length})</span>
+                      {incomingOrders.filter(o => o.orderStatus === "Pending").length > 0 && (
+                        <span className="bg-amber-100 text-amber-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
+                          {incomingOrders.filter(o => o.orderStatus === "Pending").length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setSellerActiveTab("profile")}
+                      className={`flex items-center gap-1.5 pb-2 border-b-2 font-bold text-xs transition cursor-pointer ${
+                        sellerActiveTab === "profile"
+                          ? "border-green-750 text-green-755 border-green-700"
+                          : "border-transparent text-gray-500"
+                      }`}
+                    >
+                      <Settings2 size={14} />
+                      <span>Edit Shop Settings</span>
+                    </button>
+                  </div>
+
+                  {/* Sub panels contents */}
+                  <div>
+                    {sellerActiveTab === "products" && (
+                      <div className="space-y-6">
+                        {loadingSellerProducts ? (
+                          <div className="text-center py-10 text-gray-500">Loading listed products...</div>
+                        ) : sellerProducts.length === 0 ? (
+                          <div className="text-center py-16 bg-white border border-gray-150 text-gray-400 space-y-4 rounded-3xl shadow-xs max-w-xl mx-auto">
+                            <Store size={40} className="mx-auto text-gray-300" />
+                            <h3 className="font-bold text-lg text-gray-700">No products listed</h3>
+                            <p className="text-sm">
+                              {sellerProfile?.verificationStatus === "approved"
+                                ? "List organic terrace produce or spare tools to begin."
+                                : "Your shop registration is pending admin verification. You can list items but they will show in catalog only post validation."}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {sellerProducts.map((p) => (
+                              <ProductCard
+                                key={p.id}
+                                product={p as any}
+                                isOwner={true}
+                                onEdit={(item) => {
+                                  setEditingSellerProduct(item as any);
+                                  setShowSellerProductForm(true);
+                                }}
+                                onDelete={handleSellerProductDelete}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {sellerActiveTab === "orders" && (
+                      <div className="space-y-6">
+                        <h3 className="text-lg font-bold text-gray-800">Incoming Shop Purchases</h3>
+                        
+                        {loadingIncomingOrders ? (
+                          <div className="text-center py-10 text-gray-500">Loading incoming orders...</div>
+                        ) : incomingOrders.length === 0 ? (
+                          <div className="text-center py-16 bg-white rounded-3xl border border-gray-150 text-gray-400 space-y-4 max-w-xl mx-auto shadow-xs">
+                            <ShoppingBag size={40} className="mx-auto text-gray-300" />
+                            <h3 className="font-bold text-gray-750">No orders received</h3>
+                            <p className="text-sm">Buyers will order listed products once they are approved by administration.</p>
+                          </div>
+                        ) : (
+                          <div className="grid md:grid-cols-2 gap-6">
+                            {incomingOrders.map((ord) => (
+                              <OrderCard
+                                key={ord.id}
+                                order={ord}
+                                role="seller"
+                                onStatusChange={handleIncomingOrderStatusChange}
+                                onCancel={handleIncomingOrderCancel}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {sellerActiveTab === "profile" && (
+                      <SellerForm onSuccess={handleBecomeSellerSuccess} />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </main>
 
         {/* Global Modal handlers inside Customer Dashboard */}
@@ -653,6 +954,20 @@ export default function CustomerPortal() {
           cartItems={cartItems}
           onSuccess={handleCheckoutSuccess}
         />
+
+        {/* Product Form Modal overlay for Customer-Seller listings */}
+        {showSellerProductForm && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+            <ProductForm
+              product={editingSellerProduct as any}
+              onSuccess={handleSellerProductFormSuccess}
+              onCancel={() => {
+                setShowSellerProductForm(false);
+                setEditingSellerProduct(undefined);
+              }}
+            />
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="bg-white border-t border-gray-100 py-6 text-center text-xs text-gray-400 shrink-0">
