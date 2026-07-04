@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import TerraceLoading from "./TerraceLoading";
 import TerraceAnalysisCard from "./TerraceAnalysisCard";
 import { TerraceAnalysis } from "@/types/terrace";
+import { saveTerraceAnalysis } from "@/services/terraceService";
 
 export default function TerraceUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +81,14 @@ export default function TerraceUploader() {
 
       setAnalysis(parsedAnalysis);
       setShowResult(true);
+
+      // Perform Firestore save. If it fails, report card must still remain visible.
+      try {
+        await saveTerraceAnalysis(parsedAnalysis);
+      } catch (dbErr) {
+        console.error("Firestore save failed:", dbErr);
+        setError("Analysis completed successfully, but could not be saved.");
+      }
     } catch (err: any) {
       console.error("Terrace analysis failed:", err);
       setError("Unable to analyze terrace. Please try again.");
@@ -135,7 +144,9 @@ export default function TerraceUploader() {
 
       {error && (
         <div className="bg-red-50 text-red-600 rounded-3xl p-6 text-center shadow-md">
-          <p className="font-semibold">⚠️ Analysis Failed</p>
+          <p className="font-semibold">
+            {analysis ? "⚠️ Warning" : "⚠️ Analysis Failed"}
+          </p>
           <p className="text-sm mt-1">{error}</p>
         </div>
       )}
