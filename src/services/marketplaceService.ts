@@ -131,45 +131,47 @@ export async function getProducts(filters?: {
   search?: string;
 }): Promise<Product[]> {
   const productsRef = collection(db, "products");
-  let q = query(productsRef, orderBy("createdAt", "desc"));
-
-  // Apply filters using multiple where conditions if possible, 
-  // but keep it simple to avoid Firestore index requirements where possible.
-  if (filters?.sellerId) {
-    q = query(productsRef, where("sellerId", "==", filters.sellerId), orderBy("createdAt", "desc"));
-  } else if (filters?.status) {
-    q = query(productsRef, where("approvalStatus", "==", filters.status), orderBy("createdAt", "desc"));
-  }
-
-  const snapshot = await getDocs(q);
-  let products = snapshot.docs.map((doc) => ({
+  
+  // Retrieve all products and filter/sort client-side to guarantee index-free operations
+  const snapshot = await getDocs(productsRef);
+  let productsList = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...(doc.data() as Omit<Product, "id">),
   }));
 
-  // Client-side filtering for other criteria to avoid Firestore Index creation requirements
+  // Client-side filtering
   if (filters) {
-    if (filters.sellerId && filters.status) {
-      products = products.filter(p => p.approvalStatus === filters.status);
+    if (filters.sellerId) {
+      productsList = productsList.filter((p) => p.sellerId === filters.sellerId);
+    }
+    if (filters.status) {
+      productsList = productsList.filter((p) => p.approvalStatus === filters.status);
     }
     if (filters.category && filters.category !== "All") {
-      products = products.filter(p => p.category === filters.category);
+      productsList = productsList.filter((p) => p.category === filters.category);
     }
-    if (filters.subcategory) {
-      products = products.filter(p => p.subcategory === filters.subcategory);
+    if (filters.subcategory && filters.subcategory !== "All" && filters.subcategory !== "") {
+      productsList = productsList.filter((p) => p.subcategory === filters.subcategory);
     }
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      products = products.filter(
-        p => 
+      productsList = productsList.filter(
+        (p) => 
           p.productName.toLowerCase().includes(searchLower) ||
-          p.description.toLowerCase().includes(searchLower) ||
-          p.businessName.toLowerCase().includes(searchLower)
+          (p.description && p.description.toLowerCase().includes(searchLower)) ||
+          (p.businessName && p.businessName.toLowerCase().includes(searchLower))
       );
     }
   }
 
-  return products;
+  // Client-side sorting (newest first)
+  productsList.sort((a, b) => {
+    const aTime = a.createdAt?.seconds || 0;
+    const bTime = b.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
+
+  return productsList;
 }
 
 // 7. Get All Sellers (Admin only)

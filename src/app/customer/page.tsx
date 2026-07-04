@@ -25,11 +25,16 @@ import {
   Plus, 
   CreditCard,
   CheckCircle2,
-  Bookmark
+  Bookmark,
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import CheckoutModal from "@/components/marketplace/CheckoutModal";
+import { Order, OrderStatus } from "@/types/order";
+import { getCustomerOrders, cancelOrder } from "@/services/orderService";
+import OrderCard from "@/components/marketplace/OrderCard";
 
-type CustomerTab = "browse" | "cart" | "wishlist" | "recent";
+type CustomerTab = "browse" | "cart" | "wishlist" | "recent" | "orders";
 
 export default function CustomerPortal() {
   const router = useRouter();
@@ -54,6 +59,11 @@ export default function CustomerPortal() {
     email: string;
   } | null>(null);
 
+  // Checkout & Orders States
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+
   // Modal controls
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
@@ -77,12 +87,14 @@ export default function CustomerPortal() {
               role: data.role || "customer",
               email: data.email || user.email || "",
             });
+            await loadCustomerOrdersData(user.uid);
           } else {
             setProfile({
               name: user.displayName || "Customer",
               role: "customer",
               email: user.email || "",
             });
+            await loadCustomerOrdersData(user.uid);
           }
         } catch (err) {
           console.error("Failed to load user profile in customer portal:", err);
@@ -92,6 +104,38 @@ export default function CustomerPortal() {
 
     return () => unsubscribe();
   }, [router]);
+
+  const loadCustomerOrdersData = async (uid: string) => {
+    setLoadingOrders(true);
+    try {
+      const list = await getCustomerOrders(uid);
+      setOrders(list);
+    } catch (e) {
+      console.error("Error loading customer orders:", e);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const handleOrderCancel = async (orderId: string) => {
+    try {
+      await cancelOrder(orderId);
+      alert("Order cancelled successfully.");
+      const user = auth.currentUser;
+      if (user) await loadCustomerOrdersData(user.uid);
+    } catch (err: any) {
+      alert("Failed to cancel order: " + err.message);
+    }
+  };
+
+  const handleCheckoutSuccess = async () => {
+    setShowCheckoutModal(false);
+    const user = auth.currentUser;
+    if (user) {
+      await loadCustomerOrdersData(user.uid);
+    }
+    setActiveTab("orders"); // Navigate to My Orders on placement success
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -278,6 +322,23 @@ export default function CustomerPortal() {
           </button>
 
           <button
+            onClick={() => setActiveTab("orders")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+              activeTab === "orders"
+                ? "border-green-700 text-green-700"
+                : "border-transparent text-gray-500 hover:text-gray-855"
+            }`}
+          >
+            <ClipboardList size={16} />
+            <span>My Orders</span>
+            {orders.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length > 0 && (
+              <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                {orders.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length} active
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab("recent")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
               activeTab === "recent"
@@ -426,7 +487,7 @@ export default function CustomerPortal() {
                     </div>
 
                     <Button
-                      onClick={handleCheckout}
+                      onClick={() => setShowCheckoutModal(true)}
                       className="w-full py-3 bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 mt-4"
                     >
                       <CreditCard size={18} />
@@ -478,6 +539,42 @@ export default function CustomerPortal() {
                         </Button>
                       </div>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3.5: MY ORDERS */}
+          {activeTab === "orders" && (
+            <div className="max-w-5xl mx-auto space-y-6">
+              <h2 className="text-2xl font-bold text-gray-800">My Orders & Shipments</h2>
+              
+              {loadingOrders ? (
+                <div className="text-center py-10 text-gray-500">Loading orders...</div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-3xl border border-gray-150 text-gray-400 space-y-4 max-w-xl mx-auto shadow-sm">
+                  <ClipboardList size={48} className="mx-auto text-gray-300 opacity-80" />
+                  <h3 className="font-bold text-lg text-gray-700">No orders placed yet</h3>
+                  <p className="text-sm">
+                    Go browse our marketplace catalog to order fresh farm produce, soil inputs, watering systems, or hydroponics equipment.
+                  </p>
+                  <Button
+                    onClick={() => setActiveTab("browse")}
+                    className="bg-green-700 text-white rounded-xl font-bold px-6"
+                  >
+                    Browse Marketplace
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {orders.map((ord) => (
+                    <OrderCard
+                      key={ord.id}
+                      order={ord}
+                      role="customer"
+                      onCancel={handleOrderCancel}
+                    />
                   ))}
                 </div>
               )}
@@ -558,6 +655,14 @@ export default function CustomerPortal() {
             onViewProductDetails={setSelectedProduct}
           />
         )}
+
+        {/* Checkout Modal */}
+        <CheckoutModal
+          isOpen={showCheckoutModal}
+          onClose={() => setShowCheckoutModal(false)}
+          cartItems={cartItems}
+          onSuccess={handleCheckoutSuccess}
+        />
 
         {/* Footer */}
         <footer className="bg-white border-t border-gray-100 py-6 text-center text-xs text-gray-400 shrink-0">

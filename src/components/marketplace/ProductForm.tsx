@@ -5,6 +5,7 @@ import { addProduct, updateProduct } from "@/services/marketplaceService";
 import { useLanguage } from "@/components/common/LanguageContext";
 import { MARKETPLACE_CATEGORIES, CategoryName } from "@/lib/marketplaceConstants";
 import { Product } from "@/types/marketplace";
+import { X } from "lucide-react";
 
 interface ProductFormProps {
   product?: Product; // If provided, we are in Edit Mode
@@ -55,6 +56,22 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     if (subs && subs.length > 0) {
       setSubcategory(subs[0]);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 800 * 1024) {
+      alert("Image file is too large! Please choose an image smaller than 800 KB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImageUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,16 +271,62 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-            Image URL (Optional)
+            Product Photo
           </label>
-          <Input
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="Direct web path to product photo"
-            className="rounded-xl"
-          />
+          
+          <div className="flex flex-col sm:flex-row gap-4 items-center bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200">
+            {imageUrl ? (
+              <div className="relative w-24 h-24 rounded-xl overflow-hidden border shrink-0 bg-white shadow-xs">
+                <img
+                  src={imageUrl}
+                  alt="Product preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl("")}
+                  className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full text-xs hover:bg-red-700 transition"
+                  title="Remove image"
+                >
+                  <X size={10} />
+                </button>
+              </div>
+            ) : (
+              <div className="w-24 h-24 rounded-xl border bg-white flex items-center justify-center text-gray-300 shrink-0 shadow-xs">
+                <span className="text-2xl">📸</span>
+              </div>
+            )}
+            
+            <div className="flex-1 w-full space-y-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                id="product-photo-upload"
+              />
+              <label
+                htmlFor="product-photo-upload"
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-250 bg-white hover:bg-gray-50 text-gray-705 font-bold text-xs rounded-xl shadow-sm cursor-pointer select-none transition"
+              >
+                Choose Image File...
+              </label>
+              
+              <div className="text-[10px] text-gray-400 font-medium">
+                <p>Upload a photo of your fresh terrace harvest. Limit size to 800 KB.</p>
+                <p className="mt-0.5">Or paste a web link below:</p>
+              </div>
+              
+              <Input
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Or paste direct image web URL here"
+                className="rounded-xl h-8 text-xs"
+              />
+            </div>
+          </div>
         </div>
 
         <div>

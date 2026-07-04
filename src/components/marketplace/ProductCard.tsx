@@ -138,29 +138,48 @@ export default function ProductCard({
           </div>
 
           {/* Owners Status Badges */}
-          {(isOwner || isAdmin) && product.approvalStatus && (
-            <div className="mb-4">
+          {(isOwner || isAdmin) && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {product.approvalStatus && (
+                <Badge
+                  variant={
+                    product.approvalStatus === "approved"
+                      ? "default"
+                      : product.approvalStatus === "rejected"
+                      ? "destructive"
+                      : "outline"
+                  }
+                  className={`capitalize font-bold text-[10px] py-0.5 px-2 rounded-full border ${
+                    product.approvalStatus === "approved"
+                      ? "bg-green-100 text-green-800 border-green-200"
+                      : product.approvalStatus === "rejected"
+                      ? "bg-red-100 text-red-800 border-red-200"
+                      : "bg-amber-100 text-amber-800 border-amber-200"
+                  }`}
+                >
+                  {product.approvalStatus === "approved" 
+                    ? t("approved") 
+                    : product.approvalStatus === "rejected" 
+                    ? t("rejected") 
+                    : t("pendingApproval")}
+                </Badge>
+              )}
+
+              {/* Stock Indicator Badge */}
               <Badge
-                variant={
-                  product.approvalStatus === "approved"
-                    ? "default"
-                    : product.approvalStatus === "rejected"
-                    ? "destructive"
-                    : "outline"
-                }
-                className={`capitalize font-bold text-xs ${
-                  product.approvalStatus === "approved"
-                    ? "bg-green-100 text-green-800 border-green-200"
-                    : product.approvalStatus === "rejected"
-                    ? "bg-red-100 text-red-800 border-red-200"
-                    : "bg-amber-100 text-amber-800 border-amber-200"
+                className={`font-bold text-[10px] py-0.5 px-2 rounded-full border ${
+                  product.quantity === 0
+                    ? "bg-red-100 border-red-200 text-red-800"
+                    : product.quantity < 5
+                    ? "bg-amber-100 border-amber-200 text-amber-800 animate-pulse"
+                    : "bg-green-100 border-green-200 text-green-800"
                 }`}
               >
-                {product.approvalStatus === "approved" 
-                  ? t("approved") 
-                  : product.approvalStatus === "rejected" 
-                  ? t("rejected") 
-                  : t("pendingApproval")}
+                {product.quantity === 0
+                  ? "Out of Stock"
+                  : product.quantity < 5
+                  ? `Low Stock: ${product.quantity} items`
+                  : `In Stock: ${product.quantity}`}
               </Badge>
             </div>
           )}

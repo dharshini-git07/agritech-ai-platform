@@ -22,6 +22,9 @@ import {
   Star,
   Plus
 } from "lucide-react";
+import { Order, OrderStatus } from "@/types/order";
+import { getSellerOrders, updateOrderStatus, cancelOrder } from "@/services/orderService";
+import OrderCard from "@/components/marketplace/OrderCard";
 
 type SubView = "products" | "profile" | "orders";
 
@@ -34,6 +37,10 @@ export default function SellerDashboard() {
   // Products Management
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Orders Management
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   // View controllers
   const [activeTab, setActiveTab] = useState<SubView>("products");
@@ -59,6 +66,7 @@ export default function SellerDashboard() {
           setIsSeller(true);
           setSellerProfile(data.sellerProfile as SellerProfile);
           await loadSellerProducts(uid);
+          await loadSellerOrdersData(uid);
         } else {
           setIsSeller(false);
           setSellerProfile(null);
@@ -80,6 +88,46 @@ export default function SellerDashboard() {
       console.error("Error loading seller products:", err);
     } finally {
       setLoadingProducts(false);
+    }
+  };
+
+  const loadSellerOrdersData = async (uid: string) => {
+    setLoadingOrders(true);
+    try {
+      const list = await getSellerOrders(uid);
+      setOrders(list);
+    } catch (err) {
+      console.error("Error loading seller orders:", err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const handleOrderStatusChange = async (orderId: string, status: OrderStatus) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      alert(`Order status updated to: ${status}`);
+      const user = auth.currentUser;
+      if (user) {
+        await loadSellerOrdersData(user.uid);
+        await loadSellerProducts(user.uid); // Refresh stock display if quantity changes
+      }
+    } catch (err: any) {
+      alert("Failed to update status: " + err.message);
+    }
+  };
+
+  const handleOrderCancel = async (orderId: string) => {
+    try {
+      await cancelOrder(orderId);
+      alert("Order cancelled successfully.");
+      const user = auth.currentUser;
+      if (user) {
+        await loadSellerOrdersData(user.uid);
+        await loadSellerProducts(user.uid); // Refresh product stocks
+      }
+    } catch (err: any) {
+      alert("Failed to cancel order: " + err.message);
     }
   };
 
@@ -210,6 +258,11 @@ export default function SellerDashboard() {
         >
           <ShoppingBag size={16} />
           <span>My Orders</span>
+          {orders.filter(o => o.orderStatus === "Pending").length > 0 && (
+            <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+              {orders.filter(o => o.orderStatus === "Pending").length} pending
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab("profile")}
@@ -269,12 +322,32 @@ export default function SellerDashboard() {
         )}
 
         {activeTab === "orders" && (
-          <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-gray-150 p-12 text-center text-gray-400 space-y-4">
-            <ShoppingBag size={48} className="mx-auto text-gray-300 opacity-80" />
-            <h3 className="font-bold text-lg text-gray-700">No orders received yet</h3>
-            <p className="text-sm">
-              As customers browse the Namma Kadai catalog and order items from your business, they will be listed here. You will be notified to fulfill them.
-            </p>
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-gray-800">Incoming Customer Orders</h3>
+            
+            {loadingOrders ? (
+              <div className="text-center py-10 text-gray-500">Loading incoming orders...</div>
+            ) : orders.length === 0 ? (
+              <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-gray-150 p-12 text-center text-gray-400 space-y-4">
+                <ShoppingBag size={48} className="mx-auto text-gray-300 opacity-80" />
+                <h3 className="font-bold text-lg text-gray-700">No orders received yet</h3>
+                <p className="text-sm">
+                  As customers purchase your catalog items, their shipments will show up here. You can manage status updates, accept, or cancel orders directly.
+                </p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {orders.map((ord) => (
+                  <OrderCard
+                    key={ord.id}
+                    order={ord}
+                    role="seller"
+                    onStatusChange={handleOrderStatusChange}
+                    onCancel={handleOrderCancel}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
