@@ -1,16 +1,22 @@
+"use client";
+
+import { useLanguage } from "@/components/common/LanguageContext";
+
 export default function HeroStats() {
+  const { t } = useLanguage();
+
   const stats = [
     {
       number: "1000+",
-      title: "Farmers",
+      title: "farmers",
     },
     {
       number: "95%",
-      title: "Water Saved",
+      title: "waterSaved",
     },
     {
       number: "24/7",
-      title: "AI Monitoring",
+      title: "aiMonitoring",
     },
   ];
 
@@ -18,13 +24,9 @@ export default function HeroStats() {
     <div className="flex gap-12 mt-10">
       {stats.map((stat) => (
         <div key={stat.title}>
-          <h2 className="text-3xl font-bold text-green-600">
-            {stat.number}
-          </h2>
+          <h2 className="text-3xl font-bold text-green-600">{stat.number}</h2>
 
-          <p className="text-gray-500">
-            {stat.title}
-          </p>
+          <p className="text-gray-500 text-sm font-medium">{t(stat.title as any)}</p>
         </div>
       ))}
     </div>

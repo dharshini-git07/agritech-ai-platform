@@ -35,6 +35,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Retrieve user language preference from cookie
+    const preferredLanguage = req.cookies.get("preferredLanguage")?.value || "en";
+
+    let languageInstruction = "";
+    if (preferredLanguage === "ta") {
+      languageInstruction = `
+IMPORTANT LANGUAGE RULE:
+- You must generate all text responses and string values in Tamil (தமிழ்).
+- Keep all JSON keys in English exactly as defined in the schema (do NOT translate terraceArea, usableArea, etc.). Only translate the text values of these keys.
+`;
+    } else if (preferredLanguage === "hi") {
+      languageInstruction = `
+IMPORTANT LANGUAGE RULE:
+- You must generate all text responses and string values in Hindi (हिन्दी).
+- Keep all JSON keys in English exactly as defined in the schema (do NOT translate terraceArea, usableArea, etc.). Only translate the text values of these keys.
+`;
+    } else {
+      languageInstruction = `
+IMPORTANT LANGUAGE RULE:
+- You must generate all text responses and string values in English.
+`;
+    }
+
     const prompt = `
 You are an Urban Terrace Farming Expert.
 Analyze the uploaded terrace or backyard image and return ONLY valid JSON.
@@ -59,13 +82,15 @@ Rules:
 - Assess sunlight conditions and drainage based on visible structures, slopes, or shadows.
 - Suggest a space-efficient layout.
 - List recommended crops in the cropSuggestions array.
-- Provide a realistic estimatedCost in rupees (INR).
+- Provide a realistic estimatedCost in rupees (INR) or localized translation.
 - Keep recommendations short and concise.
 - Set confidence percentage (e.g. 90%).
 - Write a short human-readable analysisSummary summarizing the complete analysis.
 - No markdown formatting.
 - No explanation.
 - JSON only.
+
+${languageInstruction}
 `;
 
     const response = await ai.models.generateContent({

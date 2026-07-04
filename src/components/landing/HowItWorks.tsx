@@ -1,60 +1,49 @@
-import StepCard from "./StepCard";
+"use client";
 
-import {
-  Upload,
-  ScanSearch,
-  Sprout,
-  Leaf,
-} from "lucide-react";
+import StepCard from "./StepCard";
+import { Upload, ScanSearch, Sprout, Leaf } from "lucide-react";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 export default function HowItWorks() {
+  const { t } = useLanguage();
+
   return (
     <section className="max-w-7xl mx-auto py-24 px-8">
-
       <div className="text-center mb-16">
+        <h2 className="text-4xl font-bold">{t("howItWorksTitle")}</h2>
 
-        <h2 className="text-4xl font-bold">
-          How It Works
-        </h2>
-
-        <p className="text-gray-600 mt-4">
-          Four simple steps to start your AI-powered terrace farming journey.
-        </p>
-
+        <p className="text-gray-600 mt-4">{t("howItWorksDesc")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-
         <StepCard
           step="01"
           icon={Upload}
-          title="Upload Terrace"
-          description="Upload a terrace image or enter measurements."
+          title={t("step1Title")}
+          description={t("step1Desc")}
         />
 
         <StepCard
           step="02"
           icon={ScanSearch}
-          title="AI Analysis"
-          description="AI measures your terrace and detects usable space."
+          title={t("step2Title")}
+          description={t("step2Desc")}
         />
 
         <StepCard
           step="03"
           icon={Sprout}
-          title="Smart Recommendation"
-          description="Receive crop, soil and hydroponic suggestions."
+          title={t("step3Title")}
+          description={t("step3Desc")}
         />
 
         <StepCard
           step="04"
           icon={Leaf}
-          title="Start Farming"
-          description="Follow the AI plan and monitor your smart farm."
+          title={t("step4Title")}
+          description={t("step4Desc")}
         />
-
       </div>
-
     </section>
   );
 }

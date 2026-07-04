@@ -1,52 +1,42 @@
-import RoleCard from "@/components/auth/RoleCard";
+"use client";
 
-import {
-  Tractor,
-  ShoppingCart,
-  ShieldCheck,
-} from "lucide-react";
+import RoleCard from "@/components/auth/RoleCard";
+import { useLanguage } from "@/components/common/LanguageContext";
+import { Tractor, ShoppingCart, ShieldCheck } from "lucide-react";
 
 export default function RoleSelection() {
+  const { t } = useLanguage();
+
   return (
     <main className="max-w-7xl mx-auto py-24 px-8">
-
       <div className="text-center mb-16">
+        <h1 className="text-5xl font-bold">{t("chooseRoleTitle")}</h1>
 
-        <h1 className="text-5xl font-bold">
-          Choose Your Role
-        </h1>
-
-        <p className="text-gray-600 mt-4">
-          Select how you want to access AgriTech AI.
-        </p>
-
+        <p className="text-gray-600 mt-4">{t("chooseRoleDesc")}</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-10">
-
         <RoleCard
           icon={Tractor}
-          title="Farmer"
-          description="Manage AI farming, monitoring and marketplace."
+          title="farmerRoleTitle"
+          description="farmerRoleDesc"
           href="/login?role=farmer"
         />
 
         <RoleCard
           icon={ShoppingCart}
-          title="Customer"
-          description="Browse and purchase fresh farm products."
+          title="customerRoleTitle"
+          description="customerRoleDesc"
           href="/login?role=customer"
         />
 
         <RoleCard
           icon={ShieldCheck}
-          title="Admin"
-          description="Manage the complete AgriTech AI platform."
+          title="adminRoleTitle"
+          description="adminRoleDesc"
           href="/login?role=admin"
         />
-
       </div>
-
     </main>
   );
 }

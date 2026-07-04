@@ -7,10 +7,13 @@ import { useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 export default function RegisterForm() {
   const searchParams = useSearchParams();
   const role = searchParams.get("role") || "farmer";
+  const { t } = useLanguage();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +21,7 @@ export default function RegisterForm() {
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      alert(t("passwordsDoNotMatch"));
       return;
     }
 
@@ -31,19 +34,16 @@ export default function RegisterForm() {
 
       console.log("Auth Success");
 
-      await setDoc(
-        doc(db, "users", userCredential.user.uid),
-        {
-          uid: userCredential.user.uid,
-          name,
-          email,
-          role,
-          createdAt: serverTimestamp(),
-        }
-      );
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        name,
+        email,
+        role,
+        createdAt: serverTimestamp(),
+      });
 
       console.log("Firestore Success");
-      alert("Registration Successful!");
+      alert(t("registrationSuccessful"));
     } catch (error: any) {
       console.error(error);
       alert(error.message);
@@ -51,23 +51,21 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-10">
+    <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-10 w-full">
       <h1 className="text-3xl font-bold mb-2">
-        Register as {role}
+        {t("registerRoleTitle")} {t(role as any)}
       </h1>
-      <p className="text-gray-500 mb-8">
-        Create your AgriTech AI account.
-      </p>
+      <p className="text-gray-500 mb-8">{t("registerSubtitle")}</p>
 
       <Input
-        placeholder="Full Name"
+        placeholder={t("fullNamePlaceholder")}
         value={name}
         onChange={(e) => setName(e.target.value)}
         className="mb-4"
       />
 
       <Input
-        placeholder="Email"
+        placeholder={t("emailPlaceholder")}
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
@@ -75,7 +73,7 @@ export default function RegisterForm() {
       />
 
       <Input
-        placeholder="Password"
+        placeholder={t("passwordPlaceholder")}
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
@@ -83,18 +81,15 @@ export default function RegisterForm() {
       />
 
       <Input
-        placeholder="Confirm Password"
+        placeholder={t("confirmPasswordPlaceholder")}
         type="password"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
         className="mb-4"
       />
 
-      <Button
-        className="w-full"
-        onClick={handleRegister}
-      >
-        Create Account
+      <Button className="w-full" onClick={handleRegister}>
+        {t("createAccount")}
       </Button>
     </div>
   );

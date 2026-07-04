@@ -1,58 +1,45 @@
-import FeatureCard from "./FeatureCard";
+"use client";
 
-import {
-  Sprout,
-  Droplets,
-  Wifi,
-  ShoppingCart,
-} from "lucide-react";
+import FeatureCard from "./FeatureCard";
+import { Sprout, Droplets, Wifi, ShoppingCart } from "lucide-react";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 export default function Features() {
+  const { t } = useLanguage();
+
   return (
     <section className="max-w-7xl mx-auto py-24 px-8">
-
       <div className="text-center mb-16">
+        <h2 className="text-4xl font-bold">{t("featuresTitle")}</h2>
 
-        <h2 className="text-4xl font-bold">
-          Why Choose AgriTech AI?
-        </h2>
-
-        <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
-          Experience intelligent farming powered by AI,
-          IoT, Hydroponics and direct farm-to-customer
-          connectivity.
-        </p>
-
+        <p className="mt-4 text-gray-600 max-w-2xl mx-auto">{t("featuresDesc")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-
         <FeatureCard
           icon={Sprout}
-          title="AI Terrace Analysis"
-          description="Analyze terrace dimensions using AI-powered computer vision."
+          title={t("featTerraceTitle")}
+          description={t("featTerraceDesc")}
         />
 
         <FeatureCard
           icon={Droplets}
-          title="Smart Hydroponics"
-          description="Monitor pH, nutrients and water quality in real time."
+          title={t("featHydroTitle")}
+          description={t("featHydroDesc")}
         />
 
         <FeatureCard
           icon={Wifi}
-          title="IoT Monitoring"
-          description="Track soil moisture, humidity and temperature."
+          title={t("featIotTitle")}
+          description={t("featIotDesc")}
         />
 
         <FeatureCard
           icon={ShoppingCart}
-          title="Namma Kadai"
-          description="Sell fresh produce directly to customers."
+          title={t("featMarketTitle")}
+          description={t("featMarketDesc")}
         />
-
       </div>
-
     </section>
   );
 }

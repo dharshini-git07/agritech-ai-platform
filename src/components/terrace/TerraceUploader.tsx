@@ -7,9 +7,11 @@ import TerraceLoading from "./TerraceLoading";
 import TerraceAnalysisCard from "./TerraceAnalysisCard";
 import { TerraceAnalysis } from "@/types/terrace";
 import { saveTerraceAnalysis } from "@/services/terraceService";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 export default function TerraceUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   const [image, setImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -43,7 +45,7 @@ export default function TerraceUploader() {
 
   const handleAnalyze = async () => {
     if (!selectedFile) {
-      alert("Please select an image first.");
+      alert(t("selectImageAlert"));
       return;
     }
 
@@ -65,7 +67,7 @@ export default function TerraceUploader() {
       });
 
       if (!response.ok) {
-        throw new Error("Unable to analyze terrace. Please try again.");
+        throw new Error(t("analyzeFailedError"));
       }
 
       const data = await response.json();
@@ -75,7 +77,7 @@ export default function TerraceUploader() {
         parsedAnalysis = JSON.parse(data.result);
       } catch (parseErr) {
         console.error("JSON parsing error:", parseErr);
-        setError("AI returned an invalid response.");
+        setError(t("invalidResponseAlert"));
         return;
       }
 
@@ -87,11 +89,11 @@ export default function TerraceUploader() {
         await saveTerraceAnalysis(parsedAnalysis);
       } catch (dbErr) {
         console.error("Firestore save failed:", dbErr);
-        setError("Analysis completed successfully, but could not be saved.");
+        setError(t("saveFailedWarning"));
       }
     } catch (err: any) {
       console.error("Terrace analysis failed:", err);
-      setError("Unable to analyze terrace. Please try again.");
+      setError(t("analyzeFailedError"));
     } finally {
       setLoading(false);
     }
@@ -103,13 +105,9 @@ export default function TerraceUploader() {
         onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed border-green-400 rounded-3xl p-12 text-center cursor-pointer hover:bg-green-50"
       >
-        <h2 className="text-2xl font-bold">
-          🏠 Upload Terrace Image
-        </h2>
+        <h2 className="text-2xl font-bold">{t("uploadTerraceImage")}</h2>
 
-        <p className="text-gray-500 mt-3">
-          Upload your terrace photo for AI planning.
-        </p>
+        <p className="text-gray-500 mt-3">{t("uploadTerraceDesc")}</p>
       </div>
 
       <input
@@ -130,12 +128,8 @@ export default function TerraceUploader() {
             className="rounded-3xl shadow-lg"
           />
 
-          <Button
-            className="w-full"
-            onClick={handleAnalyze}
-            disabled={loading}
-          >
-            {loading ? "Analyzing..." : "Analyze Terrace"}
+          <Button className="w-full" onClick={handleAnalyze} disabled={loading}>
+            {loading ? t("analyzingTerraceText") : t("analyzeTerraceButton")}
           </Button>
         </>
       )}
@@ -145,7 +139,7 @@ export default function TerraceUploader() {
       {error && (
         <div className="bg-red-50 text-red-600 rounded-3xl p-6 text-center shadow-md">
           <p className="font-semibold">
-            {analysis ? "⚠️ Warning" : "⚠️ Analysis Failed"}
+            {analysis ? t("warningLabel") : t("analysisFailedLabel")}
           </p>
           <p className="text-sm mt-1">{error}</p>
         </div>

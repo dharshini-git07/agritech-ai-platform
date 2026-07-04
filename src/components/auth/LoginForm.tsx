@@ -2,29 +2,22 @@
 
 import { sendPasswordResetEmail } from "firebase/auth";
 import Link from "next/link";
-
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
 import { auth, db } from "@/lib/firebase";
-
 import { signInWithEmailAndPassword } from "firebase/auth";
-
 import { doc, getDoc } from "firebase/firestore";
-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 export default function LoginForm() {
-
   const router = useRouter();
-
   const searchParams = useSearchParams();
-
   const selectedRole = searchParams.get("role") || "farmer";
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
-
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
@@ -42,7 +35,7 @@ export default function LoginForm() {
       );
 
       if (!userDoc.exists()) {
-        alert("User profile not found.");
+        alert(t("userProfileNotFound"));
         return;
       }
 
@@ -51,7 +44,7 @@ export default function LoginForm() {
       // Role verification
       if (userData.role !== selectedRole) {
         alert(
-          `Wrong role selected.\nPlease login as ${userData.role}.`
+          `${t("wrongRoleSelected")} ${t(userData.role as any)}.`
         );
         return;
       }
@@ -73,54 +66,43 @@ export default function LoginForm() {
         default:
           router.push("/");
       }
-
     } catch (error: any) {
       alert(error.message);
     }
   };
 
   const handleForgotPassword = async () => {
-
     if (!email) {
-      alert("Please enter your email first.");
+      alert(t("enterEmailFirst"));
       return;
     }
 
     try {
-
       await sendPasswordResetEmail(auth, email);
-
-      alert("Password reset email sent. Please check your inbox.");
-
+      alert(t("passwordResetSent"));
     } catch (error: any) {
-
       alert(error.message);
-
     }
-
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-10">
-
+    <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-10 w-full">
       <h1 className="text-3xl font-bold mb-2">
-        Welcome {selectedRole}
+        {t("welcomeRole")} {t(selectedRole as any)}
       </h1>
 
-      <p className="text-gray-500 mb-8">
-        Login to continue.
-      </p>
+      <p className="text-gray-500 mb-8">{t("loginSubtitle")}</p>
 
       <Input
         type="email"
-        placeholder="Email"
+        placeholder={t("emailPlaceholder")}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         className="mb-4"
       />
       <Input
         type="password"
-        placeholder="Password"
+        placeholder={t("passwordPlaceholder")}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         className="mb-6"
@@ -128,27 +110,24 @@ export default function LoginForm() {
 
       <button
         onClick={handleForgotPassword}
-        className="text-sm text-green-600 hover:underline"
+        className="text-sm text-green-650 hover:underline cursor-pointer mb-6 block text-left"
       >
-        Forgot Password?
+        {t("forgotPassword")}
       </button>
 
-      <Button
-        className="w-full"
-        onClick={handleLogin}
-      >
-        Login
+      <Button className="w-full" onClick={handleLogin}>
+        {t("login")}
       </Button>
 
       <p className="text-center mt-6 text-sm">
-        Don't have an account?{" "}
+        {t("dontHaveAccount")}{" "}
         <Link
           href={`/register?role=${selectedRole}`}
-          className="text-green-600 font-semibold">
-          Create Account
+          className="text-green-600 font-semibold"
+        >
+          {t("createAccount")}
         </Link>
       </p>
-
     </div>
   );
 }

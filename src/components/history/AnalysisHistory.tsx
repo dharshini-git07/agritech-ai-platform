@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { getUserCropAnalyses } from "@/services/analysisService";
 import { getUserTerraceAnalyses } from "@/services/terraceService";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 export default function AnalysisHistory() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -63,7 +65,7 @@ export default function AnalysisHistory() {
   if (loading) {
     return (
       <div className="text-center py-10 text-gray-500 font-medium">
-        Loading analysis history...
+        {t("loadingHistory")}
       </div>
     );
   }
@@ -83,9 +85,9 @@ export default function AnalysisHistory() {
   if (history.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500 bg-white rounded-3xl shadow-md p-8 max-w-xl mx-auto">
-        <h3 className="text-xl font-bold mb-2">No AI analysis history found</h3>
+        <h3 className="text-xl font-bold mb-2">{t("noHistoryTitle")}</h3>
         <p className="text-gray-400">
-          Run Crop Analysis or Terrace Planner to generate your first report.
+          {t("noHistoryDesc")}
         </p>
       </div>
     );
@@ -108,9 +110,9 @@ export default function AnalysisHistory() {
                     : "bg-blue-100 text-blue-800"
                 }`}
               >
-                {isCrop ? "🌱 Crop Analysis" : "🏠 Terrace Analysis"}
+                {isCrop ? `🌱 ${t("cropAnalysis")}` : `🏠 ${t("terracePlanner")}`}
               </span>
-              <span className="text-xs text-gray-405 font-medium text-gray-400">
+              <span className="text-xs font-medium text-gray-400">
                 {formatTimestamp(item.createdAt)}
               </span>
             </div>
@@ -118,19 +120,19 @@ export default function AnalysisHistory() {
             {isCrop ? (
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-gray-800">
-                  {item.crop || "Unknown Crop"}
+                  {item.crop || t("notAvailable")}
                 </h2>
                 <p className="text-gray-650 text-sm">
-                  <strong>Health Status:</strong> {item.health || "N/A"}
+                  <strong>{t("healthLabel")}:</strong> {item.health || t("notAvailable")}
                 </p>
                 <p className="text-gray-650 text-sm">
-                  <strong>Disease:</strong> {item.disease || "N/A"}
+                  <strong>{t("diseaseLabel")}:</strong> {item.disease || t("notAvailable")}
                 </p>
                 <p className="text-gray-650 text-sm">
-                  <strong>Severity:</strong> {item.severity || "N/A"}
+                  <strong>{t("severityLabel")}:</strong> {item.severity || t("notAvailable")}
                 </p>
                 <p className="text-gray-650 text-sm">
-                  <strong>Recommendation:</strong> {item.recommendation || "N/A"}
+                  <strong>{t("recommendationLabel")}:</strong> {item.recommendation || t("notAvailable")}
                 </p>
               </div>
             ) : (
@@ -140,23 +142,23 @@ export default function AnalysisHistory() {
                 </h2>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <p className="text-gray-650">
-                    <strong>Terrace Area:</strong> {item.terraceArea || "N/A"}
+                    <strong>{t("terraceAreaLabel")}:</strong> {item.terraceArea || t("notAvailable")}
                   </p>
                   <p className="text-gray-650">
-                    <strong>Usable Area:</strong> {item.usableArea || "N/A"}
+                    <strong>{t("usableAreaLabel")}:</strong> {item.usableArea || t("notAvailable")}
                   </p>
                 </div>
                 <p className="text-gray-655 text-sm">
-                  <strong>Sunlight:</strong> {item.sunlight || "N/A"}
+                  <strong>{t("sunlightLabel")}:</strong> {item.sunlight || t("notAvailable")}
                 </p>
                 <p className="text-sm font-semibold text-green-700">
-                  <strong>Estimated Cost:</strong> {item.estimatedCost || "N/A"}
+                  <strong>{t("estimatedCostLabel")}:</strong> {item.estimatedCost || t("notAvailable")}
                 </p>
                 <p className="text-gray-655 text-sm">
-                  <strong>AI Confidence:</strong> {item.confidence || "N/A"}
+                  <strong>{t("confidenceLabel")}:</strong> {item.confidence || t("notAvailable")}
                 </p>
                 <div className="bg-gray-50 rounded-2xl p-4 mt-2 text-sm text-gray-700 leading-relaxed">
-                  <strong>Analysis Summary:</strong> {item.analysisSummary || "N/A"}
+                  <strong>{t("summaryLabel")}:</strong> {item.analysisSummary || t("notAvailable")}
                 </div>
               </div>
             )}

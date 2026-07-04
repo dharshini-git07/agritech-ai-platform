@@ -4,11 +4,12 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import CropAnalysisCard from "./CropAnalysisCard";
-import CropLoading from "./CropLoading";
 import { saveAnalysis } from "@/services/analysisService";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 export default function CropUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -47,7 +48,7 @@ export default function CropUploader() {
 
   const handleAnalyze = async () => {
     if (!selectedFile) {
-      alert("Please select an image first.");
+      alert(t("selectImageAlert"));
       return;
     }
 
@@ -77,10 +78,9 @@ export default function CropUploader() {
       await saveAnalysis(result);
 
       setShowAnalysis(true);
-
     } catch (error) {
       console.error(error);
-      alert("AI Analysis Failed.");
+      alert(t("analysisFailedAlert"));
     } finally {
       setLoading(false);
     }
@@ -88,18 +88,13 @@ export default function CropUploader() {
 
   return (
     <div className="space-y-8">
-
       <div
         onClick={() => fileInputRef.current?.click()}
         className="border-2 border-dashed border-green-400 rounded-3xl p-12 text-center cursor-pointer hover:bg-green-50 transition"
       >
-        <h2 className="text-2xl font-bold">
-          🌱 Upload Crop Image
-        </h2>
+        <h2 className="text-2xl font-bold">{t("uploadCropImage")}</h2>
 
-        <p className="text-gray-500 mt-3">
-          Upload a crop or leaf image for AI health analysis.
-        </p>
+        <p className="text-gray-500 mt-3">{t("uploadCropDesc")}</p>
       </div>
 
       <input
@@ -112,7 +107,6 @@ export default function CropUploader() {
 
       {selectedImage && (
         <div className="space-y-6">
-
           <Image
             src={selectedImage}
             alt="Crop Preview"
@@ -121,31 +115,19 @@ export default function CropUploader() {
             className="rounded-3xl w-full object-cover shadow-lg"
           />
 
-          <Button
-            className="w-full"
-            onClick={handleAnalyze}
-          >
-            Analyze Crop
+          <Button className="w-full" onClick={handleAnalyze}>
+            {t("analyzeCropButton")}
           </Button>
 
           {loading && (
             <div className="bg-white rounded-3xl shadow-lg p-10 text-center">
+              <h2 className="text-2xl font-bold">{t("analyzingCropText")}</h2>
 
-              <h2 className="text-2xl font-bold">
-                🤖 AI is analyzing your crop...
-              </h2>
-
-              <p className="text-gray-500 mt-4">
-                Identifying crop, detecting diseases and preparing recommendations...
-              </p>
-
+              <p className="text-gray-500 mt-4">{t("analyzingCropDesc")}</p>
             </div>
           )}
 
-          {showAnalysis && (
-            <CropAnalysisCard analysis={analysis} />
-          )}
-
+          {showAnalysis && <CropAnalysisCard analysis={analysis} />}
         </div>
       )}
     </div>
