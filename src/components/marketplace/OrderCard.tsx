@@ -243,7 +243,7 @@ export default function OrderCard({
                 <Button
                   disabled={updating}
                   onClick={() => handleStatusUpdate("Confirmed")}
-                  className="bg-green-750 hover:bg-green-800 text-white rounded-xl font-bold text-xs"
+                  className="bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold text-xs"
                 >
                   <CheckCircle size={14} className="mr-1.5" /> Accept Order
                 </Button>
@@ -279,7 +279,7 @@ export default function OrderCard({
               <Button
                 disabled={updating}
                 onClick={() => handleStatusUpdate("Out for Delivery")}
-                className="bg-orange-655 hover:bg-orange-700 text-white rounded-xl font-bold text-xs"
+                className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-xs"
               >
                 <Truck size={14} className="mr-1.5" /> Mark Out for Delivery
               </Button>

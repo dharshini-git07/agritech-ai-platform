@@ -17,6 +17,11 @@ import {
 import { SellerProfile, Product } from "@/types/marketplace";
 import { useLanguage, Language } from "@/components/common/LanguageContext";
 import { Button } from "@/components/ui/button";
+import AdminDashboard from "@/components/admin/AdminDashboard";
+import UserManager from "@/components/admin/UserManager";
+import AnalyticsTab from "@/components/admin/AnalyticsTab";
+import ReportsTab from "@/components/admin/ReportsTab";
+import NotificationBell from "@/components/notification/NotificationBell";
 import { 
   Users, 
   Package, 
@@ -34,13 +39,17 @@ import {
   ShoppingBag,
   TrendingDown,
   Search,
-  SlidersHorizontal
+  SlidersHorizontal,
+  LayoutDashboard,
+  Users2,
+  BarChart3,
+  FileSpreadsheet
 } from "lucide-react";
 import { getAllOrders, cancelOrder } from "@/services/orderService";
 import { Order, OrderStatus } from "@/types/order";
 import OrderCard from "@/components/marketplace/OrderCard";
 
-type AdminTab = "sellers" | "products" | "categories" | "orders";
+type AdminTab = "dashboard" | "users" | "sellers" | "products" | "categories" | "orders" | "analytics" | "reports";
 
 export default function AdminPortal() {
   const router = useRouter();
@@ -51,7 +60,7 @@ export default function AdminPortal() {
   const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
 
   // Admin Data State
-  const [activeTab, setActiveTab] = useState<AdminTab>("sellers");
+  const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [sellers, setSellers] = useState<{ uid: string; name: string; email: string; sellerProfile: SellerProfile }[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,9 +209,8 @@ export default function AdminPortal() {
               <ShieldAlert size={20} />
             </span>
             <h1 className="text-xl font-bold text-gray-800">AgriTech AI — Admin Panel</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
+          </div>          <div className="flex items-center gap-3">
+            <NotificationBell />
             {profile && (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -266,9 +274,33 @@ export default function AdminPortal() {
             )}
           </div>
         </header>
-
+ 
         {/* Admin Navigation Tabs */}
         <div className="bg-white border-b border-gray-100 px-6 md:px-8 py-1 flex gap-2 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-none">
+          <button
+            onClick={() => setActiveTab("dashboard")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+              activeTab === "dashboard"
+                ? "border-red-650 text-red-650"
+                : "border-transparent text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            <LayoutDashboard size={16} />
+            <span>{t("dashboard")}</span>
+          </button>
+ 
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+              activeTab === "users"
+                ? "border-red-650 text-red-650"
+                : "border-transparent text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            <Users2 size={16} />
+            <span>{t("userManagement")}</span>
+          </button>
+ 
           <button
             onClick={() => setActiveTab("sellers")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -292,7 +324,7 @@ export default function AdminPortal() {
             <Package size={16} />
             <span>{t("productsApprovals")} ({products.filter(p => p.approvalStatus === "pending").length} {t("pendingApproval").toLowerCase()})</span>
           </button>
-
+ 
           <button
             onClick={() => setActiveTab("categories")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -304,7 +336,7 @@ export default function AdminPortal() {
             <Tags size={16} />
             <span>{t("categoryConfigurator")}</span>
           </button>
-
+ 
           <button
             onClick={() => setActiveTab("orders")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -316,17 +348,47 @@ export default function AdminPortal() {
             <ShoppingBag size={16} />
             <span>{t("ordersModeration")} ({orders.filter(o => o.orderStatus === "Pending").length} {t("pendingApproval").toLowerCase()})</span>
           </button>
+ 
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+              activeTab === "analytics"
+                ? "border-red-650 text-red-650"
+                : "border-transparent text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            <BarChart3 size={16} />
+            <span>{t("analytics")}</span>
+          </button>
+ 
+          <button
+            onClick={() => setActiveTab("reports")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
+              activeTab === "reports"
+                ? "border-red-650 text-red-650"
+                : "border-transparent text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            <FileSpreadsheet size={16} />
+            <span>{t("reports")}</span>
+          </button>
         </div>
 
         {/* Tab Panel contents */}
         <main className="flex-1 overflow-y-auto p-8 max-w-7xl mx-auto w-full">
-          {loading ? (
+          {loading && (activeTab === "sellers" || activeTab === "products" || activeTab === "orders") ? (
             <div className="flex justify-center items-center h-[50vh] text-gray-500 font-semibold gap-2">
               <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
               <span>Loading admin panel details...</span>
             </div>
           ) : (
             <div>
+              {/* Tab 0: Dashboard Summary */}
+              {activeTab === "dashboard" && <AdminDashboard />}
+ 
+              {/* Tab 0.5: User Management */}
+              {activeTab === "users" && <UserManager />}
+ 
               {/* Tab 1: Sellers Approval Panel */}
               {activeTab === "sellers" && (
                 <div className="space-y-6">
@@ -633,6 +695,12 @@ export default function AdminPortal() {
                   </div>
                 );
               })()}
+ 
+              {/* Tab 7: Analytics charts */}
+              {activeTab === "analytics" && <AnalyticsTab />}
+ 
+              {/* Tab 8: Platforms Reports */}
+              {activeTab === "reports" && <ReportsTab />}
             </div>
           )}
         </main>

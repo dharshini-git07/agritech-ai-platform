@@ -1,5 +1,6 @@
 import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { NotificationService } from "./notificationService";
 
 export async function saveAnalysis(analysis: any): Promise<string> {
   const user = auth.currentUser;
@@ -13,6 +14,20 @@ export async function saveAnalysis(analysis: any): Promise<string> {
     ...analysis,
     createdAt: serverTimestamp(),
   });
+
+  try {
+    await NotificationService.createNotification({
+      userId: user.uid,
+      role: "farmer",
+      title: "Crop Analysis Completed",
+      message: `AI analysis completed for crop: ${analysis.cropName || analysis.crop || "Crop"}. Health status: ${analysis.healthStatus || analysis.health || "N/A"}.`,
+      type: "AI Recommendation",
+      priority: "Medium",
+      actionUrl: "/dashboard/history"
+    });
+  } catch (err) {
+    console.error("Failed to create crop analysis notification:", err);
+  }
 
   return docRef.id;
 }

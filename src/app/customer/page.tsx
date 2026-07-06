@@ -8,6 +8,7 @@ import { auth, db } from "@/lib/firebase";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MarketStorefront from "@/components/marketplace/MarketStorefront";
 import AiShoppingAssistant from "@/components/marketplace/AiShoppingAssistant";
+import NotificationBell from "@/components/notification/NotificationBell";
 import { useMarketplace } from "@/components/marketplace/MarketplaceContext";
 import ProductCard from "@/components/marketplace/ProductCard";
 import ProductDetail from "@/components/marketplace/ProductDetail";
@@ -308,71 +309,73 @@ export default function CustomerPortal() {
                 Go to Farming Dashboard
               </button>
             )}
-            
-            {profile && (
-              <div className="relative" ref={dropdownRef}>
-                {/* Profile Header Button */}
-                <button
-                  onClick={() => setIsOpen(!isOpen)}
-                  className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-2xl transition focus:outline-none select-none text-left cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-full bg-green-150 text-green-850 flex items-center justify-center font-bold text-lg border border-green-200">
-                    {profile.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="hidden md:block">
-                    <p className="font-semibold text-gray-800 text-sm leading-tight">
-                      {profile.name}
-                    </p>
-                    <p className="text-xs text-gray-400 font-medium capitalize">
-                      {t(profile.role as any || "customerRoleTitle")}
-                    </p>
-                  </div>
-                </button>
-
-                {/* User Menu Dropdown */}
-                {isOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-gray-100 py-3 text-sm text-gray-700 animate-in fade-in-50 slide-in-from-top-3 duration-200">
-                    <div className="px-5 py-3 border-b border-gray-100">
-                      <p className="font-bold text-gray-800 text-base">
+                      <div className="flex items-center gap-3">
+              <NotificationBell />
+              {profile && (
+                <div className="relative" ref={dropdownRef}>
+                  {/* Profile Header Button */}
+                  <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-2xl transition focus:outline-none select-none text-left cursor-pointer"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-green-150 text-green-850 flex items-center justify-center font-bold text-lg border border-green-200">
+                      {profile.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="hidden md:block">
+                      <p className="font-semibold text-gray-800 text-sm leading-tight">
                         {profile.name}
                       </p>
-                      <p className="text-xs text-gray-400 capitalize font-medium">
+                      <p className="text-xs text-gray-400 font-medium capitalize">
                         {t(profile.role as any || "customerRoleTitle")}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1 truncate">
-                        {profile.email}
-                      </p>
                     </div>
+                  </button>
 
-                    {/* Language Selection */}
-                    <div className="px-5 py-3 border-b border-gray-100">
-                      <label className="text-xs text-gray-400 font-semibold block mb-1">
-                        Language
-                      </label>
-                      <select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value as Language)}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-green-400 cursor-pointer"
-                      >
-                        <option value="en">English</option>
-                        <option value="ta">தமிழ்</option>
-                        <option value="hi">हिन्दी</option>
-                      </select>
-                    </div>
+                  {/* User Menu Dropdown */}
+                  {isOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-gray-150 py-3 text-sm text-gray-700 animate-in fade-in-50 slide-in-from-top-3 duration-200">
+                      <div className="px-5 py-3 border-b border-gray-100">
+                        <p className="font-bold text-gray-850 text-base">
+                          {profile.name}
+                        </p>
+                        <p className="text-xs text-gray-400 capitalize font-medium">
+                          {t(profile.role as any || "customerRoleTitle")}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1 truncate">
+                          {profile.email}
+                        </p>
+                      </div>
 
-                    <div className="py-2 px-3">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2.5 text-red-650 hover:bg-red-50 rounded-2xl flex items-center gap-3 transition font-semibold cursor-pointer"
-                      >
-                        <LogOut size={18} />
-                        <span>{t("logout")}</span>
-                      </button>
+                      {/* Language Selection */}
+                      <div className="px-5 py-3 border-b border-gray-100">
+                        <label className="text-xs text-gray-400 font-semibold block mb-1">
+                          Language
+                        </label>
+                        <select
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value as Language)}
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-green-400 cursor-pointer"
+                        >
+                          <option value="en">English</option>
+                          <option value="ta">தமிழ்</option>
+                          <option value="hi">हिन्दी</option>
+                        </select>
+                      </div>
+
+                      <div className="py-2 px-3">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2.5 text-red-650 hover:bg-red-50 rounded-2xl flex items-center gap-3 transition font-semibold cursor-pointer"
+                        >
+                          <LogOut size={18} />
+                          <span>{t("logout")}</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

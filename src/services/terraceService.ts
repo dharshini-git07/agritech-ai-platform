@@ -1,6 +1,7 @@
 import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { TerraceAnalysis } from "@/types/terrace";
+import { NotificationService } from "./notificationService";
 
 export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<string> {
   const user = auth.currentUser;
@@ -29,6 +30,20 @@ export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<st
     confidenceReason: analysis.confidenceReason,
     createdAt: serverTimestamp(),
   });
+
+  try {
+    await NotificationService.createNotification({
+      userId: user.uid,
+      role: "farmer",
+      title: "Terrace Analysis Completed",
+      message: `AI terrace layout planning completed successfully for ${analysis.terraceArea || "N/A"} sq ft.`,
+      type: "AI Recommendation",
+      priority: "Medium",
+      actionUrl: "/dashboard/terrace-planner"
+    });
+  } catch (err) {
+    console.error("Failed to create terrace analysis notification:", err);
+  }
 
   return docRef.id;
 }

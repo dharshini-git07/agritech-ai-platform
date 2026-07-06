@@ -7,7 +7,8 @@ import {
   where, 
   orderBy, 
   serverTimestamp,
-  runTransaction
+  runTransaction,
+  updateDoc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Order, OrderStatus, PaymentMethod, OrderProduct } from "@/types/order";
@@ -105,12 +106,12 @@ export async function createOrdersFromCheckout(
     });
   });
 
-  // D. Post-transaction: Send notifications asynchronously
   for (const sellerId in groupedBySeller) {
     sendOrderNotification(
       sellerId,
       "New Order Received",
-      `You have received a new customer order on Namma Kadai.`
+      `You have received a new customer order on Namma Kadai.`,
+      "/dashboard/marketplace"
     );
   }
 }
@@ -197,12 +198,10 @@ export async function updateOrderStatus(
   const orderData = orderSnap.data() as Order;
   const isDelivered = status === "Delivered";
 
-  await runTransaction(db, async (transaction) => {
-    transaction.update(orderRef, {
-      orderStatus: status,
-      paymentStatus: isDelivered ? "paid" : orderData.paymentStatus,
-      updatedAt: serverTimestamp(),
-    });
+  await updateDoc(orderRef, {
+    orderStatus: status,
+    paymentStatus: isDelivered ? "paid" : orderData.paymentStatus,
+    updatedAt: serverTimestamp(),
   });
 
   // Send status change notification to customer
@@ -236,23 +235,23 @@ export async function cancelOrder(orderId: string): Promise<void> {
   await restoreStock(stockItems);
 
   // B. Update status to Cancelled
-  await runTransaction(db, async (transaction) => {
-    transaction.update(orderRef, {
-      orderStatus: "Cancelled",
-      paymentStatus: "failed",
-      updatedAt: serverTimestamp(),
-    });
+  await updateDoc(orderRef, {
+    orderStatus: "Cancelled",
+    paymentStatus: "failed",
+    updatedAt: serverTimestamp(),
   });
 
   // C. Notify Customer & Seller
   await sendOrderNotification(
     orderData.customerId,
     "Order Cancelled",
-    `Your order with "${orderData.sellerName}" has been successfully cancelled.`
+    `Your order with "${orderData.sellerName}" has been successfully cancelled.`,
+    "/customer"
   );
   await sendOrderNotification(
     orderData.sellerId,
     "Order Cancelled",
-    `Order ${orderId} has been cancelled by the customer.`
+    `Order ${orderId} has been cancelled by the customer.`,
+    "/dashboard/marketplace"
   );
 }

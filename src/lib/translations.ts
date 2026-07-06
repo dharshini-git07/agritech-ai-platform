@@ -271,6 +271,8 @@ export const translations = {
     assistantSuccessCart: "All available products from your custom Shopping Kit have been added to your cart!",
     assistantSuccessSaved: "Your Shopping Kit has been successfully saved to Firestore!",
     sellersManagement: "Sellers Registration Management",
+    userManagement: "User Management",
+    analytics: "Analytics",
     noSellersFound: "No sellers found in the platform.",
     typeLabel: "Type",
     farmerLabel: "Farmer",
@@ -607,6 +609,8 @@ export const translations = {
     assistantSuccessCart: "உங்கள் தனிப்பயன் ஷாப்பிங் கிட்டில் இருந்து கிடைக்கக்கூடிய அனைத்து தயாரிப்புகளும் வண்டியில் சேர்க்கப்பட்டுள்ளன!",
     assistantSuccessSaved: "உங்கள் ஷாப்பிங் கிட் வெற்றிகரமாக ஃபயர்ஸ்டோரில் சேமிக்கப்பட்டது!",
     sellersManagement: "விற்பனையாளர் பதிவு மேலாண்மை",
+    userManagement: "பயனர் மேலாண்மை",
+    analytics: "பகுப்பாய்வு",
     noSellersFound: "இந்த தளத்தில் விற்பனையாளர்கள் யாரும் இல்லை.",
     typeLabel: "வகை",
     farmerLabel: "விவசாயி",
@@ -1006,5 +1010,7 @@ export const translations = {
     becomeSellerTitle: "नम्मा कड़ाई पर विक्रेता बनें",
     becomeSellerDesc: "अन्य स्थानीय उत्पादकों को सीधे बीज, उपकरण, जैविक खाद, या ताजा उपज बेचना शुरू करने के लिए अपने घरेलू नर्सरी या छत के बगीचे के व्यवसाय को पंजीकृत करें।",
     verificationLabel: "सत्यापन",
+    userManagement: "उपयोगकर्ता प्रबंधन",
+    analytics: "विश्लेषण",
   }
 };

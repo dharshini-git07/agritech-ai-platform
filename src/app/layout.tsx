@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import { LanguageProvider } from "@/components/common/LanguageContext";
 import { MarketplaceProvider } from "@/components/marketplace/MarketplaceContext";
+import { NotificationProvider } from "@/components/common/NotificationContext";
 
 export default function RootLayout({
   children,
@@ -33,7 +34,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <LanguageProvider>
           <MarketplaceProvider>
-            {children}
+            <NotificationProvider>
+              {children}
+            </NotificationProvider>
           </MarketplaceProvider>
         </LanguageProvider>
       </body>
