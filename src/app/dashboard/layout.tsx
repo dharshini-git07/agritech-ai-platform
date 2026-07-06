@@ -1,6 +1,7 @@
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardNavbar from "@/components/dashboard/DashboardNavbar";
+import AiShoppingAssistant from "@/components/marketplace/AiShoppingAssistant";
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,8 @@ export default function DashboardLayout({
             {children}
           </main>
         </div>
+        {/* Global AI Shopping Assistant floating panel */}
+        <AiShoppingAssistant />
       </div>
     </ProtectedRoute>
   );

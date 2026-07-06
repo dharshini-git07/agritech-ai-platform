@@ -1,16 +1,20 @@
 import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
-export async function saveAnalysis(analysis: any) {
+export async function saveAnalysis(analysis: any): Promise<string> {
   const user = auth.currentUser;
 
-  if (!user) return;
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
 
-  await addDoc(collection(db, "crop_analysis"), {
+  const docRef = await addDoc(collection(db, "crop_analysis"), {
     uid: user.uid,
     ...analysis,
     createdAt: serverTimestamp(),
   });
+
+  return docRef.id;
 }
 
 export async function getUserCropAnalyses(uid: string): Promise<any[]> {

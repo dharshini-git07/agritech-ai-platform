@@ -6,10 +6,17 @@ import { Button } from "@/components/ui/button";
 import CropAnalysisCard from "./CropAnalysisCard";
 import { saveAnalysis } from "@/services/analysisService";
 import { useLanguage } from "@/components/common/LanguageContext";
+import { useMarketplace } from "@/components/marketplace/MarketplaceContext";
+import { RecommendationEngine } from "@/services/recommendationEngine";
+import { RecoveryKitService } from "@/services/recoveryKitService";
+import { RecoveryKit } from "@/types/recoveryKit";
+import { auth } from "@/lib/firebase";
+import AiCropRecoveryKit from "./AiCropRecoveryKit";
 
 export default function CropUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
+  const { products: marketplaceProducts } = useMarketplace();
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -17,6 +24,7 @@ export default function CropUploader() {
   const [loading, setLoading] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
+  const [recoveryKit, setRecoveryKit] = useState<RecoveryKit | null>(null);
 
   const handleImageChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -54,6 +62,7 @@ export default function CropUploader() {
 
     try {
       setLoading(true);
+      setRecoveryKit(null);
 
       const base64Image = await fileToBase64(selectedFile);
 
@@ -75,7 +84,27 @@ export default function CropUploader() {
 
       setAnalysis(result);
 
-      await saveAnalysis(result);
+      const cropAnalysisId = await saveAnalysis(result);
+
+      // Generate and save AI Crop Recovery Kit
+      const { recommendations, timeline, estimatedTotalCost } = RecommendationEngine.generateRecoveryKit(
+        result,
+        marketplaceProducts
+      );
+
+      const kitData = {
+        cropAnalysisId,
+        recommendations,
+        timeline,
+        estimatedTotalCost,
+      };
+
+      const recoveryKitId = await RecoveryKitService.saveRecoveryKit(kitData);
+      setRecoveryKit({
+        id: recoveryKitId,
+        uid: auth.currentUser?.uid || "",
+        ...kitData,
+      });
 
       setShowAnalysis(true);
     } catch (error) {
@@ -128,6 +157,7 @@ export default function CropUploader() {
           )}
 
           {showAnalysis && <CropAnalysisCard analysis={analysis} />}
+          {showAnalysis && recoveryKit && <AiCropRecoveryKit recoveryKit={recoveryKit} />}
         </div>
       )}
     </div>

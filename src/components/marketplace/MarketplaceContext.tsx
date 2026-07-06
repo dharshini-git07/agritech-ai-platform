@@ -18,6 +18,7 @@ interface MarketplaceContextType {
   loadingWishlist: boolean;
   refreshProducts: () => Promise<Product[]>;
   addToCart: (product: Product) => Promise<void>;
+  addMultipleToCart: (items: { product: Product; quantity: number }[]) => Promise<void>;
   updateCartQuantity: (productId: string, quantity: number) => Promise<void>;
   removeCartItem: (productId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -212,6 +213,39 @@ export function MarketplaceProvider({ children }: { children: React.ReactNode })
     return wishlistIds.includes(productId);
   };
 
+  const addMultipleToCart = async (itemsToAdd: { product: Product; quantity: number }[]) => {
+    if (!userId) {
+      alert("Please login to add items to your cart.");
+      return;
+    }
+
+    let updatedCart = [...cartItems];
+
+    for (const item of itemsToAdd) {
+      const existingIndex = updatedCart.findIndex((i) => i.product.id === item.product.id);
+      if (existingIndex > -1) {
+        const existing = updatedCart[existingIndex];
+        const newQty = existing.quantity + item.quantity;
+        if (newQty > item.product.quantity) {
+          updatedCart[existingIndex] = { ...existing, quantity: item.product.quantity };
+        } else {
+          updatedCart[existingIndex] = { ...existing, quantity: newQty };
+        }
+      } else {
+        const qty = Math.min(item.quantity, item.product.quantity);
+        updatedCart.push({ product: item.product, quantity: qty });
+      }
+    }
+
+    setCartItems(updatedCart);
+
+    const dbItems = updatedCart.map((item) => ({
+      productId: item.product.id!,
+      quantity: item.quantity,
+    }));
+    await saveFirestoreCart(userId, dbItems);
+  };
+
   return (
     <MarketplaceContext.Provider
       value={{
@@ -223,6 +257,7 @@ export function MarketplaceProvider({ children }: { children: React.ReactNode })
         loadingWishlist,
         refreshProducts,
         addToCart,
+        addMultipleToCart,
         updateCartQuantity,
         removeCartItem,
         clearCart,

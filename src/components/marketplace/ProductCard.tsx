@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash, MapPin, Eye, ShoppingCart, Award, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useMarketplace } from "./MarketplaceContext";
+import { RecommendationScore } from "@/types/recommendation";
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +17,7 @@ interface ProductCardProps {
   onViewDetails?: (product: Product) => void;
   onViewSeller?: (sellerId: string) => void;
   onApprove?: (productId: string, status: "approved" | "rejected") => void;
+  recommendation?: RecommendationScore;
 }
 
 export default function ProductCard({
@@ -28,6 +30,7 @@ export default function ProductCard({
   onViewDetails,
   onViewSeller,
   onApprove,
+  recommendation,
 }: ProductCardProps) {
   const { t } = useLanguage();
   const { addToCart, toggleWishlist, isInWishlist } = useMarketplace();
@@ -103,6 +106,32 @@ export default function ProductCard({
           <p className="text-gray-400 text-xs font-medium mb-3 line-clamp-1">{product.subcategory}</p>
 
           <p className="text-gray-500 text-sm line-clamp-2 mb-4 h-10">{product.description}</p>
+
+          {/* Suitability Score Section */}
+          {recommendation && (
+            <div className="mb-4 bg-emerald-50/10 p-3.5 rounded-2xl border border-emerald-100/50">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">AI Suitability:</span>
+                <span className="text-xs font-bold text-gray-800">
+                  {recommendation.indicatorText}
+                </span>
+              </div>
+              <details className="mt-2 text-xs group">
+                <summary className="text-[11px] font-bold text-green-700 hover:text-green-800 cursor-pointer list-none flex items-center gap-1 select-none focus:outline-none">
+                  <span>Why this match?</span>
+                  <span className="text-[9px] group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <ul className="mt-2 space-y-1 text-gray-550 list-none pl-0">
+                  {recommendation.explanations.map((exp, expIdx) => (
+                    <li key={expIdx} className="flex items-start gap-1 font-medium leading-normal">
+                      <span className="text-green-600 font-bold shrink-0">✓</span>
+                      <span>{exp.replace(/^[✔✓✖]/, "").trim()}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </div>
+          )}
         </div>
 
         <div>

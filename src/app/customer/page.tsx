@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MarketStorefront from "@/components/marketplace/MarketStorefront";
+import AiShoppingAssistant from "@/components/marketplace/AiShoppingAssistant";
 import { useMarketplace } from "@/components/marketplace/MarketplaceContext";
 import ProductCard from "@/components/marketplace/ProductCard";
 import ProductDetail from "@/components/marketplace/ProductDetail";
@@ -973,6 +974,9 @@ export default function CustomerPortal() {
         <footer className="bg-white border-t border-gray-100 py-6 text-center text-xs text-gray-400 shrink-0">
           <p>© 2026 AgriTech AI Smart Urban Farming. All Rights Reserved.</p>
         </footer>
+
+        {/* Global AI Shopping Assistant floating panel */}
+        <AiShoppingAssistant />
       </div>
     </ProtectedRoute>
   );

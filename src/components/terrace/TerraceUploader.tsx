@@ -8,10 +8,18 @@ import TerraceAnalysisCard from "./TerraceAnalysisCard";
 import { TerraceAnalysis } from "@/types/terrace";
 import { saveTerraceAnalysis } from "@/services/terraceService";
 import { useLanguage } from "@/components/common/LanguageContext";
+import { useMarketplace } from "@/components/marketplace/MarketplaceContext";
+import { RecommendationEngine } from "@/services/recommendationEngine";
+import { StarterKitService } from "@/services/starterKitService";
+import { StarterKit } from "@/types/starterKit";
+import { auth } from "@/lib/firebase";
+import AiStarterKit from "./AiStarterKit";
 
 export default function TerraceUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
+  const { products: marketplaceProducts } = useMarketplace();
+  const [starterKit, setStarterKit] = useState<StarterKit | null>(null);
 
   const [analysisMode, setAnalysisMode] = useState<"image" | "manual" | "hybrid">("hybrid");
 
@@ -73,6 +81,7 @@ export default function TerraceUploader() {
     setLoading(true);
     setError(null);
     setShowResult(false);
+    setStarterKit(null);
 
     try {
       let base64Image = null;
@@ -121,7 +130,34 @@ export default function TerraceUploader() {
 
       // Perform Firestore save. If it fails, report card must still remain visible.
       try {
-        await saveTerraceAnalysis(parsedAnalysis);
+        const terraceAnalysisId = await saveTerraceAnalysis(parsedAnalysis);
+
+        // Generate and save AI Starter Kit
+        const { recommendations, estimatedTotalCost } = RecommendationEngine.generateStarterKit(
+          parsedAnalysis,
+          marketplaceProducts,
+          {
+            length,
+            width,
+            floor,
+            city,
+            budget,
+            preference,
+          }
+        );
+
+        const starterKitData = {
+          terraceAnalysisId,
+          recommendations,
+          estimatedTotalCost,
+        };
+
+        const starterKitId = await StarterKitService.saveStarterKit(starterKitData);
+        setStarterKit({
+          id: starterKitId,
+          uid: auth.currentUser?.uid || "",
+          ...starterKitData,
+        });
       } catch (dbErr) {
         console.error("Firestore save failed:", dbErr);
         setError(t("saveFailedWarning"));
@@ -351,6 +387,7 @@ export default function TerraceUploader() {
       )}
 
       {showResult && analysis && <TerraceAnalysisCard analysis={analysis} />}
+      {showResult && starterKit && <AiStarterKit starterKit={starterKit} />}
     </div>
   );
 }

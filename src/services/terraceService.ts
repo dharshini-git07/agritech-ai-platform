@@ -2,14 +2,14 @@ import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } f
 import { auth, db } from "@/lib/firebase";
 import { TerraceAnalysis } from "@/types/terrace";
 
-export async function saveTerraceAnalysis(analysis: TerraceAnalysis) {
+export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<string> {
   const user = auth.currentUser;
 
   if (!user) {
     throw new Error("User not authenticated.");
   }
 
-  await addDoc(collection(db, "terrace_analysis"), {
+  const docRef = await addDoc(collection(db, "terrace_analysis"), {
     uid: user.uid,
     analysisMode: analysis.analysisMode,
     terraceArea: analysis.terraceArea,
@@ -29,6 +29,8 @@ export async function saveTerraceAnalysis(analysis: TerraceAnalysis) {
     confidenceReason: analysis.confidenceReason,
     createdAt: serverTimestamp(),
   });
+
+  return docRef.id;
 }
 
 export async function getUserTerraceAnalyses(uid: string): Promise<any[]> {

@@ -6,6 +6,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AiShoppingAssistant from "@/components/marketplace/AiShoppingAssistant";
 import { 
   getAllSellers, 
   approveSellerProfile, 
@@ -635,6 +636,8 @@ export default function AdminPortal() {
             </div>
           )}
         </main>
+        {/* Global AI Shopping Assistant floating panel */}
+        <AiShoppingAssistant />
       </div>
     </ProtectedRoute>
   );
