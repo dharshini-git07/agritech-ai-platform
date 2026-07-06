@@ -45,7 +45,7 @@ export default function Navbar() {
           <Button variant="outline">{t("login")}</Button>
         </Link>
 
-        <Link href="/role-selection">
+        <Link href="/role-selection" className="hidden sm:inline-block">
           <Button>{t("getStarted")}</Button>
         </Link>
       </div>

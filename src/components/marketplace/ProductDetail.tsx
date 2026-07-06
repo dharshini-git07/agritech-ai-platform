@@ -41,11 +41,11 @@ export default function ProductDetail({ product, onClose, onViewSeller }: Produc
         <div className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6 mt-4">
             {/* Image section */}
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-gray-100">
               <img
                 src={product.images?.[0]}
                 alt={product.productName}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-2"
               />
               
               {/* Category Badge overlay */}

@@ -6,6 +6,7 @@ import { auth } from "@/lib/firebase";
 import { X, CreditCard, ShoppingBag, Landmark, Send, ClipboardList } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/common/LanguageContext";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function CheckoutModal({
   cartItems,
   onSuccess,
 }: CheckoutModalProps) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   
   // Checkout Form Details
@@ -52,13 +54,13 @@ export default function CheckoutModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName || !deliveryAddress || !contactNumber) {
-      alert("Please fill in all required fields.");
+      alert(t("selectImageAlert"));
       return;
     }
 
     const user = auth.currentUser;
     if (!user) {
-      alert("Please authenticate to proceed with checking out.");
+      alert("Authentication required.");
       return;
     }
 
@@ -75,11 +77,11 @@ export default function CheckoutModal({
         },
         cartItems
       );
-      alert("Success: Your order has been placed! Individual sellers will package and fulfill your products.");
+      alert(t("checkoutSuccessAlert"));
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(err.message || "Failed to create orders");
+      alert(err.message || "Failed to place order.");
     } finally {
       setLoading(false);
     }
@@ -106,45 +108,45 @@ export default function CheckoutModal({
           <div>
             <h3 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
               <ClipboardList className="text-green-700" size={24} />
-              <span>Checkout Order Details</span>
+              <span>{t("myOrdersShipments")}</span>
             </h3>
-            <p className="text-xs text-gray-400 mt-1">Specify your contact and delivery address to finalize purchase.</p>
+            <p className="text-xs text-gray-400 mt-1">{t("addressDesc")}</p>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Recipient Full Name *</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t("fullNamePlaceholder")} *</label>
               <Input
                 type="text"
-                placeholder="e.g. Ramesh Kumar"
+                placeholder={t("fullNamePlaceholder")}
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="rounded-xl border-gray-250 focus:border-green-400"
+                className="rounded-xl border-gray-255 focus:border-green-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Contact Number *</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t("contactNumberLabel")} *</label>
               <Input
                 type="tel"
-                placeholder="e.g. +91 98765 43210"
+                placeholder={t("contactNumberLabel")}
                 required
                 value={contactNumber}
                 onChange={(e) => setContactNumber(e.target.value)}
-                className="rounded-xl border-gray-250 focus:border-green-400"
+                className="rounded-xl border-gray-255 focus:border-green-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Delivery Address *</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t("address")} *</label>
               <textarea
-                placeholder="Full delivery address, landmark, pin code..."
+                placeholder={t("enterAddressPlaceholder")}
                 required
                 rows={3}
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
-                className="w-full bg-white border border-gray-250 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full bg-white border border-gray-255 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
 
@@ -161,7 +163,7 @@ export default function CheckoutModal({
 
             {/* Payment Method Selector */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Select Payment Method</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">{t("paymentMethodLabel")}</label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex items-center gap-3 p-3.5 border border-green-500 bg-green-50/50 rounded-xl cursor-pointer">
                   <input
@@ -172,17 +174,15 @@ export default function CheckoutModal({
                     className="w-4 h-4 text-green-600 focus:ring-green-500 cursor-pointer"
                   />
                   <div>
-                    <p className="text-sm font-bold text-gray-800">Cash on Delivery</p>
-                    <p className="text-[10px] text-gray-400">Pay cash upon package arrival</p>
+                    <p className="text-sm font-bold text-gray-800">{t("codLabel")}</p>
                   </div>
                 </label>
-
+ 
                 {/* Placeholders for digital gateways */}
                 <div className="flex items-center gap-3 p-3.5 border border-gray-150 bg-gray-50 rounded-xl opacity-60 cursor-not-allowed">
                   <input type="radio" name="payment" disabled className="w-4 h-4 cursor-not-allowed" />
                   <div>
-                    <p className="text-sm font-bold text-gray-500">Digital Gateway</p>
-                    <p className="text-[10px] text-gray-400">UPI / Stripe / Razorpay (Soon)</p>
+                    <p className="text-sm font-bold text-gray-500">{t("onlinePaymentLabel")}</p>
                   </div>
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default function CheckoutModal({
             className="w-full py-3 bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold flex items-center justify-center gap-2"
           >
             <Send size={16} />
-            <span>{loading ? "Processing Order..." : "Confirm & Place Order"}</span>
+            <span>{loading ? "..." : t("placeOrderButton")}</span>
           </Button>
         </form>
 
@@ -228,7 +228,7 @@ export default function CheckoutModal({
           {/* Pricing detail list */}
           <div className="border-t border-gray-200 pt-4 space-y-2.5 text-xs text-gray-600 font-medium">
             <div className="flex justify-between">
-              <span>Cart Subtotal</span>
+              <span>{t("subtotalLabel")}</span>
               <span className="text-gray-800 font-semibold">₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
@@ -236,13 +236,13 @@ export default function CheckoutModal({
               <span className="text-gray-800 font-semibold">₹{gst.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Fulfillment Delivery</span>
+              <span>{t("deliveryChargeLabel")}</span>
               <span className="text-gray-855 font-bold">
-                {totalDelivery === 0 ? <span className="text-green-600">FREE</span> : `₹${totalDelivery.toFixed(2)}`}
+                {totalDelivery === 0 ? <span className="text-green-600">{t("freeLabel")}</span> : `₹${totalDelivery.toFixed(2)}`}
               </span>
             </div>
             <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-200 text-sm font-extrabold text-gray-800">
-              <span>Total Price</span>
+              <span>{t("totalLabel")}</span>
               <span className="text-lg text-green-800">₹{grandTotal.toFixed(2)}</span>
             </div>
           </div>

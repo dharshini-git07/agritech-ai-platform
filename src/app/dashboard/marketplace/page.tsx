@@ -236,7 +236,7 @@ export default function SellerDashboard() {
   }
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-8 p-4 md:p-8 w-full max-w-full overflow-hidden">
       {/* Seller Header Summary */}
       {sellerProfile && (
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -301,7 +301,7 @@ export default function SellerDashboard() {
       )}
 
       {/* Tabs selector */}
-      <div className="flex border-b border-gray-200 overflow-x-auto select-none no-scrollbar shrink-0">
+      <div className="flex border-b border-gray-200 overflow-x-auto select-none scrollbar-none shrink-0 whitespace-nowrap">
         <button
           onClick={() => setActiveTab("products")}
           className={`flex items-center gap-1.5 px-4 py-3 border-b-2 font-bold text-xs transition whitespace-nowrap cursor-pointer ${
@@ -536,26 +536,28 @@ export default function SellerDashboard() {
 
                     <div className="divide-y divide-gray-100">
                       {cartItems.map((item) => (
-                        <div key={item.product.id} className="py-4 flex gap-4 items-center">
-                          <img
-                            src={item.product.images?.[0]}
-                            alt={item.product.productName}
-                            className="w-16 h-16 object-cover rounded-xl border shrink-0 bg-white"
-                          />
-                          
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-gray-800 text-sm truncate">
-                              {item.product.productName}
-                            </h4>
-                            <p className="text-xs text-gray-400 font-medium capitalize mt-0.5">
-                              Seller: {item.product.businessName} ({item.product.sellerType})
-                            </p>
-                            <p className="text-xs text-gray-400 font-medium">
-                              Unit Price: ₹{item.product.price.toFixed(2)}
-                            </p>
+                        <div key={item.product.id} className="py-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between w-full">
+                          <div className="flex gap-4 items-center w-full min-w-0">
+                            <img
+                              src={item.product.images?.[0]}
+                              alt={item.product.productName}
+                              className="w-16 h-16 object-contain p-1 rounded-xl border shrink-0 bg-white"
+                            />
+                            
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-gray-800 text-sm truncate">
+                                {item.product.productName}
+                              </h4>
+                              <p className="text-xs text-gray-400 font-medium capitalize mt-0.5">
+                                {t("sellerLabel")}: {item.product.businessName} ({item.product.sellerType})
+                              </p>
+                              <p className="text-xs text-gray-400 font-medium">
+                                {t("unitPriceLabel")}: ₹{item.product.price.toFixed(2)}
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-6 shrink-0">
+                          <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 shrink-0">
                             {/* Quantity controls */}
                             <div className="flex items-center border border-gray-205 rounded-lg overflow-hidden shrink-0">
                               <button
@@ -572,7 +574,7 @@ export default function SellerDashboard() {
                                   if (item.quantity < item.product.quantity) {
                                     updateCartQuantity(item.product.id!, item.quantity + 1);
                                   } else {
-                                    alert("Cannot exceed available stock limit!");
+                                    alert(t("stockLimitAlert"));
                                   }
                                 }}
                                 className="p-1 hover:bg-gray-50 text-gray-500 cursor-pointer"
@@ -581,7 +583,7 @@ export default function SellerDashboard() {
                               </button>
                             </div>
 
-                            <span className="font-extrabold text-green-750 text-sm w-20 text-right">
+                            <span className="font-extrabold text-green-755 text-sm w-20 text-right">
                               ₹{(item.product.price * item.quantity).toFixed(2)}
                             </span>
 
@@ -599,11 +601,11 @@ export default function SellerDashboard() {
 
                   {/* Summary Block */}
                   <div className="w-full lg:w-80 bg-white rounded-3xl border border-gray-150 p-6 space-y-4 shadow-sm shrink-0">
-                    <h3 className="font-bold text-gray-800 text-base border-b pb-3">Checkout Details</h3>
+                    <h3 className="font-bold text-gray-800 text-base border-b pb-3">{t("orderSummary")}</h3>
                     
                     <div className="space-y-2.5 text-sm text-gray-600">
                       <div className="flex justify-between">
-                        <span>Cart Subtotal</span>
+                        <span>{t("subtotalLabel")}</span>
                         <span className="font-semibold text-gray-850">₹{subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
@@ -611,15 +613,15 @@ export default function SellerDashboard() {
                         <span className="font-semibold text-gray-850">₹{gst.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Delivery Fee</span>
+                        <span>{t("deliveryChargeLabel")}</span>
                         <span className="font-semibold text-gray-855">
-                          {totalDelivery === 0 ? <span className="text-green-600 font-bold">FREE</span> : `₹${totalDelivery.toFixed(2)}`}
+                          {totalDelivery === 0 ? <span className="text-green-600 font-bold">{t("freeLabel")}</span> : `₹${totalDelivery.toFixed(2)}`}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center border-t pt-3 font-extrabold text-gray-800">
-                      <span>Total Price</span>
+                      <span>{t("totalLabel")}</span>
                       <span className="text-xl text-green-800">₹{total.toFixed(2)}</span>
                     </div>
 
@@ -628,7 +630,7 @@ export default function SellerDashboard() {
                       className="w-full py-3 bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 mt-4"
                     >
                       <CreditCard size={18} />
-                      <span>Proceed to Checkout</span>
+                      <span>{t("placeOrderButton")}</span>
                     </Button>
                   </div>
                 </div>

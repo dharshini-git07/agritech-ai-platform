@@ -250,7 +250,7 @@ export default function AiShoppingAssistant() {
 
       {/* Slide-out Assistant Panel Drawer */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-2rem)] h-[580px] bg-white rounded-3xl border border-gray-150 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-22 right-4 sm:right-6 sm:bottom-24 z-50 w-[calc(100vw-2rem)] sm:w-96 h-[72vh] sm:h-[580px] bg-white rounded-3xl border border-gray-150 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
           
           {/* Header */}
           <div className="bg-gradient-to-r from-green-700 to-emerald-800 text-white p-4.5 flex items-center justify-between shrink-0">

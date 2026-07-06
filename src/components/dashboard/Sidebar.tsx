@@ -7,7 +7,7 @@ export default function Sidebar() {
   const { t } = useLanguage();
 
   return (
-    <aside className="w-64 bg-green-700 text-white min-h-screen p-6">
+    <aside className="hidden lg:block w-64 bg-green-700 text-white min-h-screen p-6 shrink-0">
       <h2 className="text-2xl font-bold mb-10">🌱 AgriTech AI</h2>
 
       <nav className="space-y-5">

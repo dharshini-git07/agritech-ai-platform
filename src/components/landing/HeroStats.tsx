@@ -21,7 +21,7 @@ export default function HeroStats() {
   ];
 
   return (
-    <div className="flex gap-12 mt-10">
+    <div className="flex flex-wrap gap-6 md:gap-12 mt-10">
       {stats.map((stat) => (
         <div key={stat.title}>
           <h2 className="text-3xl font-bold text-green-600">{stat.number}</h2>

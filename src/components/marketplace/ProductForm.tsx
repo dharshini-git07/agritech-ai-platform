@@ -139,7 +139,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 w-full max-w-xl mx-auto border border-gray-150">
+    <div className="bg-white rounded-3xl p-6 w-full max-w-xl mx-auto border border-gray-150 max-h-[90vh] overflow-y-auto shadow-2xl relative">
       <div className="mb-6">
         <h3 className="text-xl font-bold text-gray-800">
           {product ? t("editProduct") : t("addProduct")}
@@ -165,7 +165,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
               Category *
@@ -201,7 +201,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
               {t("price")} (₹) *
@@ -232,7 +232,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 items-center pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2">
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <input
               type="checkbox"

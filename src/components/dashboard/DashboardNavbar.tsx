@@ -5,8 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { User, LogOut, Settings } from "lucide-react";
+import { User, LogOut, Settings, Menu, X } from "lucide-react";
 import { useLanguage, Language } from "@/components/common/LanguageContext";
+import Link from "next/link";
 
 export default function DashboardNavbar() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function DashboardNavbar() {
   const { language, setLanguage, t } = useLanguage();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [profile, setProfile] = useState<{
     name: string;
     role: string;
@@ -49,6 +51,11 @@ export default function DashboardNavbar() {
     return () => unsubscribe();
   }, []);
 
+  // Close drawer on path shift
+  useEffect(() => {
+    setShowMobileDrawer(false);
+  }, [pathname]);
+
   // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,10 +83,21 @@ export default function DashboardNavbar() {
   else if (pathname.includes("/marketplace")) pageTitleKey = "marketplace";
 
   return (
-    <header className="flex justify-between items-center bg-white border-b border-gray-100 px-8 py-4 relative z-50">
-      <h1 className="text-xl md:text-2xl font-bold text-gray-800 capitalize">
-        {t(pageTitleKey)}
-      </h1>
+    <>
+      <header className="flex justify-between items-center bg-white border-b border-gray-100 px-6 md:px-8 py-4 relative z-50">
+        <div className="flex items-center">
+          {/* Hamburger Menu Toggle */}
+          <button
+            onClick={() => setShowMobileDrawer(true)}
+            className="lg:hidden mr-3 p-1.5 hover:bg-gray-100 rounded-xl text-gray-500 hover:text-gray-800 transition focus:outline-none cursor-pointer"
+          >
+            <Menu size={22} />
+          </button>
+          
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 capitalize">
+            {t(pageTitleKey)}
+          </h1>
+        </div>
 
       {profile && (
         <div className="relative" ref={dropdownRef}>
@@ -169,6 +187,70 @@ export default function DashboardNavbar() {
           )}
         </div>
       )}
-    </header>
+      </header>
+
+      {/* Mobile Sliding Navigation Drawer */}
+      {showMobileDrawer && (
+        <>
+          {/* Overlay Blocker */}
+          <div
+            onClick={() => setShowMobileDrawer(false)}
+            className="fixed inset-0 bg-black/40 z-[100] lg:hidden animate-in fade-in duration-200"
+          />
+
+          {/* Drawer Body Panel */}
+          <aside className="fixed inset-y-0 left-0 w-64 bg-green-700 text-white z-[110] p-6 lg:hidden flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-250">
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">🌱 AgriTech AI</h2>
+                <button
+                  onClick={() => setShowMobileDrawer(false)}
+                  className="p-1 hover:bg-white/10 rounded-lg text-white/80 hover:text-white cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <nav className="space-y-4">
+                <Link href="/dashboard" className="block hover:text-green-200 py-1 font-semibold text-sm">
+                  {t("dashboard")}
+                </Link>
+                <Link href="/dashboard/terrace-planner" className="block hover:text-green-200 py-1 font-semibold text-sm">
+                  🏠 {t("terracePlanner")}
+                </Link>
+                <Link href="/dashboard/crop-analysis" className="block hover:text-green-200 py-1 font-semibold text-sm">
+                  🌱 {t("cropAnalysis")}
+                </Link>
+                <Link href="/dashboard/history" className="block hover:text-green-200 py-1 font-semibold text-sm">
+                  📜 {t("history")}
+                </Link>
+                <Link href="/dashboard/hydroponics" className="block hover:text-green-200 py-1 font-semibold text-sm">
+                  💧 {t("hydroponics")}
+                </Link>
+                <Link href="/marketplace" className="block hover:text-green-200 py-1 font-semibold text-sm">
+                  🛒 {t("marketplace")}
+                </Link>
+              </nav>
+            </div>
+
+            {/* Profile Overview */}
+            {profile && (
+              <div className="border-t border-green-600/50 pt-4 flex flex-col gap-2">
+                <div>
+                  <p className="font-bold text-sm">{profile.name}</p>
+                  <p className="text-[10px] text-green-200 opacity-80 capitalize">{t(profile.role as any || "dashboard")}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="text-xs font-bold text-red-200 hover:text-red-100 mt-2 flex items-center gap-1.5 cursor-pointer text-left focus:outline-none"
+                >
+                  <LogOut size={12} /> {t("logout")}
+                </button>
+              </div>
+            )}
+          </aside>
+        </>
+      )}
+    </>
   );
 }

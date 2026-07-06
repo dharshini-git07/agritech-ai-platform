@@ -23,6 +23,7 @@ interface ProductFilterProps {
 
 export default function ProductFilter({ uniqueLocations, onFilterChange }: ProductFilterProps) {
   const { t } = useLanguage();
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -74,9 +75,15 @@ export default function ProductFilter({ uniqueLocations, onFilterChange }: Produ
   return (
     <div className="bg-white rounded-3xl border border-gray-150 p-6 shadow-sm space-y-6 shrink-0 w-full md:w-72">
       <div className="flex items-center justify-between border-b pb-4">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+        <h3
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="font-bold text-gray-800 text-lg flex items-center gap-2 cursor-pointer md:cursor-default select-none"
+        >
           <SlidersHorizontal size={18} className="text-green-700" />
           <span>Filters</span>
+          <span className="text-[10px] bg-green-50 text-green-750 px-2 py-0.5 rounded-full font-bold md:hidden">
+            {showMobileFilters ? "Tap to Hide" : "Tap to Expand"}
+          </span>
         </h3>
         <button
           onClick={handleReset}
@@ -85,6 +92,8 @@ export default function ProductFilter({ uniqueLocations, onFilterChange }: Produ
           <RotateCcw size={12} /> Reset
         </button>
       </div>
+
+      <div className={`${showMobileFilters ? "block animate-in fade-in duration-200" : "hidden"} md:block space-y-6`}>
 
       {/* 1. Instant Text Search */}
       <div className="space-y-2">
@@ -220,6 +229,7 @@ export default function ProductFilter({ uniqueLocations, onFilterChange }: Produ
             <span>Organic Certified</span>
           </span>
         </label>
+      </div>
       </div>
     </div>
   );

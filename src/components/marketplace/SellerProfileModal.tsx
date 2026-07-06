@@ -128,11 +128,13 @@ export default function SellerProfileModal({
                 <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {products.map((product) => (
                     <div key={product.id} className="border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg transition">
-                      <img
-                        src={product.images?.[0] || "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80"}
-                        alt={product.productName}
-                        className="w-full aspect-[4/3] object-cover"
-                      />
+                      <div className="relative aspect-[4/3] bg-white overflow-hidden shrink-0 border-b">
+                        <img
+                          src={product.images?.[0] || "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80"}
+                          alt={product.productName}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      </div>
                       <div className="p-4 space-y-2 bg-white">
                         <div className="flex justify-between items-center gap-2">
                           <span

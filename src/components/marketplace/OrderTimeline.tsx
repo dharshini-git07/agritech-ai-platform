@@ -33,7 +33,7 @@ export default function OrderTimeline({ status }: OrderTimelineProps) {
   return (
     <div className="py-6 px-4">
       {/* Horizontal timeline for medium+ screens */}
-      <div className="relative flex justify-between items-center w-full max-w-2xl mx-auto">
+      <div className="relative hidden sm:flex justify-between items-center w-full max-w-2xl mx-auto">
         {/* Connecting line background */}
         <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 z-0 rounded-full" />
         
@@ -75,7 +75,40 @@ export default function OrderTimeline({ status }: OrderTimelineProps) {
           );
         })}
       </div>
-      <div className="h-4" /> {/* spacer for labels */}
+      <div className="hidden sm:block h-4" /> {/* spacer for labels */}
+
+      {/* Vertical timeline for mobile screens */}
+      <div className="sm:hidden flex flex-col gap-4 pl-4 border-l-2 border-gray-200 ml-2 relative">
+        {steps.map((step, idx) => {
+          const StepIcon = step.icon;
+          const isCompleted = idx < activeIndex;
+          const isActive = idx === activeIndex;
+          const isUpcoming = idx > activeIndex;
+
+          return (
+            <div key={step.name} className="flex items-center gap-3 relative">
+              {/* Vertical connecting line indicator for active/completed */}
+              {isActive && (
+                <div className="absolute -left-[21px] top-3.5 bottom-0 w-0.5 bg-gray-200" />
+              )}
+              <div 
+                className={`w-7 h-7 rounded-full flex items-center justify-center border-2 z-10 shrink-0 ${
+                  isCompleted 
+                    ? "bg-green-600 border-green-600 text-white animate-none" 
+                    : isActive 
+                    ? "bg-white border-green-650 text-green-700 font-extrabold ring-4 ring-green-100" 
+                    : "bg-white border-gray-300 text-gray-400"
+                }`}
+              >
+                <StepIcon size={12} />
+              </div>
+              <span className={`text-xs font-semibold ${isActive ? "text-green-700 font-black" : isCompleted ? "text-gray-700" : "text-gray-450"}`}>
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

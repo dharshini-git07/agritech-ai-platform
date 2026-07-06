@@ -229,7 +229,7 @@ export default function AdminPortal() {
                         {profile.name}
                       </p>
                       <p className="text-xs text-red-500 font-bold tracking-wider">
-                        Administrator
+                        {t("administrator")}
                       </p>
                       <p className="text-xs text-gray-400 mt-1 truncate">
                         {profile.email}
@@ -238,7 +238,7 @@ export default function AdminPortal() {
 
                     <div className="px-5 py-3 border-b border-gray-100">
                       <label className="text-xs text-gray-400 font-semibold block mb-1">
-                        Language
+                        {t("languageSelect")}
                       </label>
                       <select
                         value={language}
@@ -268,7 +268,7 @@ export default function AdminPortal() {
         </header>
 
         {/* Admin Navigation Tabs */}
-        <div className="bg-white border-b border-gray-100 px-8 py-1 flex gap-2 shrink-0">
+        <div className="bg-white border-b border-gray-100 px-6 md:px-8 py-1 flex gap-2 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
             onClick={() => setActiveTab("sellers")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -278,7 +278,7 @@ export default function AdminPortal() {
             }`}
           >
             <Users size={16} />
-            <span>Sellers Approval ({sellers.filter(s => s.sellerProfile.verificationStatus === "pending").length} pending)</span>
+            <span>{t("sellersManagement")} ({sellers.filter(s => s.sellerProfile.verificationStatus === "pending").length} {t("pendingApproval").toLowerCase()})</span>
           </button>
           
           <button
@@ -290,7 +290,7 @@ export default function AdminPortal() {
             }`}
           >
             <Package size={16} />
-            <span>Products Review ({products.filter(p => p.approvalStatus === "pending").length} pending)</span>
+            <span>{t("productsApprovals")} ({products.filter(p => p.approvalStatus === "pending").length} {t("pendingApproval").toLowerCase()})</span>
           </button>
 
           <button
@@ -302,7 +302,7 @@ export default function AdminPortal() {
             }`}
           >
             <Tags size={16} />
-            <span>Manage Categories</span>
+            <span>{t("categoryConfigurator")}</span>
           </button>
 
           <button
@@ -314,7 +314,7 @@ export default function AdminPortal() {
             }`}
           >
             <ShoppingBag size={16} />
-            <span>Orders Moderation ({orders.filter(o => o.orderStatus === "Pending").length} pending)</span>
+            <span>{t("ordersModeration")} ({orders.filter(o => o.orderStatus === "Pending").length} {t("pendingApproval").toLowerCase()})</span>
           </button>
         </div>
 
@@ -330,10 +330,10 @@ export default function AdminPortal() {
               {/* Tab 1: Sellers Approval Panel */}
               {activeTab === "sellers" && (
                 <div className="space-y-6">
-                  <h2 className="text-xl font-bold text-gray-800">Sellers Registration Management</h2>
+                  <h2 className="text-xl font-bold text-gray-800">{t("sellersManagement")}</h2>
                   {sellers.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 text-gray-400">
-                      No sellers found in the platform.
+                      {t("noSellersFound")}
                     </div>
                   ) : (
                     <div className="grid md:grid-cols-2 gap-6">
@@ -362,7 +362,7 @@ export default function AdminPortal() {
                             </div>
 
                             <p className="text-xs text-gray-400 font-medium capitalize">
-                              Type: {seller.sellerProfile.sellerType} | Farmer: {seller.name}
+                              {t("typeLabel")}: {seller.sellerProfile.sellerType} | {t("farmerLabel")}: {seller.name}
                             </p>
 
                             <p className="text-sm text-gray-600 line-clamp-3 italic">
@@ -385,7 +385,7 @@ export default function AdminPortal() {
                                 onClick={() => handleSellerApproval(seller.uid, "approved")}
                                 className="bg-green-700 hover:bg-green-800 text-white font-bold text-xs py-1.5 px-4 rounded-xl flex items-center gap-1"
                               >
-                                <Check size={14} /> Approve
+                                <Check size={14} /> {t("approveLabel")}
                               </Button>
                             )}
                             {seller.sellerProfile.verificationStatus !== "rejected" && (
@@ -393,7 +393,7 @@ export default function AdminPortal() {
                                 onClick={() => handleSellerApproval(seller.uid, "rejected")}
                                 className="bg-red-50 hover:bg-red-100 border-red-200 text-red-650 font-bold text-xs py-1.5 px-4 rounded-xl flex items-center gap-1"
                               >
-                                <X size={14} /> Reject
+                                <X size={14} /> {t("rejectLabel")}
                               </Button>
                             )}
                           </div>
@@ -407,10 +407,10 @@ export default function AdminPortal() {
               {/* Tab 2: Products Review Panel */}
               {activeTab === "products" && (
                 <div className="space-y-6">
-                  <h2 className="text-xl font-bold text-gray-800">Products Listing Approvals</h2>
+                  <h2 className="text-xl font-bold text-gray-800">{t("productsApprovals")}</h2>
                   {products.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 text-gray-400">
-                      No products registered.
+                      {t("noProductsRegistered")}
                     </div>
                   ) : (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -420,11 +420,11 @@ export default function AdminPortal() {
                           className="bg-white rounded-3xl border border-gray-150 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between"
                         >
                           <div>
-                            <div className="relative aspect-[4/3] bg-gray-50">
+                            <div className="relative aspect-[4/3] bg-white border-b">
                               <img
                                 src={product.images?.[0]}
                                 alt={product.productName}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain p-2"
                               />
                               <span className="absolute top-3 left-3 bg-white/95 text-green-850 text-xs font-bold px-2 py-0.5 rounded-full border shadow-xs">
                                 {product.category}
@@ -446,7 +446,7 @@ export default function AdminPortal() {
                                 <span className="font-extrabold text-green-750">₹{product.price.toFixed(2)}</span>
                               </div>
                               <p className="text-xs text-gray-400 font-medium capitalize">
-                                Seller: {product.businessName} ({product.sellerType})
+                                {t("sellerLabel")}: {product.businessName} ({product.sellerType})
                               </p>
                               <p className="text-xs text-gray-500 line-clamp-2 italic">
                                 "{product.description}"
@@ -462,13 +462,13 @@ export default function AdminPortal() {
                                     onClick={() => handleProductApproval(product.id!, "approved")}
                                     className="flex-1 bg-green-700 hover:bg-green-800 text-white font-bold text-xs py-2 rounded-xl flex items-center justify-center gap-1"
                                   >
-                                    <Check size={14} /> Approve
+                                    <Check size={14} /> {t("approveLabel")}
                                   </Button>
                                   <Button
                                     onClick={() => handleProductApproval(product.id!, "rejected")}
                                     className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-2 rounded-xl flex items-center justify-center gap-1"
                                   >
-                                    <X size={14} /> Reject
+                                    <X size={14} /> {t("rejectLabel")}
                                   </Button>
                                 </>
                               )}
@@ -492,7 +492,7 @@ export default function AdminPortal() {
               {activeTab === "categories" && (
                 <div className="max-w-xl mx-auto bg-white rounded-3xl border border-gray-150 p-12 text-center text-gray-400 space-y-4">
                   <Tags size={48} className="mx-auto text-gray-300 opacity-80" />
-                  <h3 className="font-bold text-lg text-gray-700">Category Configurator</h3>
+                  <h3 className="font-bold text-lg text-gray-700">{t("categoryConfigurator")}</h3>
                   <p className="text-sm">
                     Preloaded Categories: Fresh Produce, Seeds & Plants, Organic inputs, Terrace Setup, Hydroponics, watering, Garden Tools.
                   </p>
@@ -528,8 +528,8 @@ export default function AdminPortal() {
                   <div className="space-y-8 animate-in fade-in duration-200">
                     <div className="flex justify-between items-center flex-wrap gap-4 border-b pb-4">
                       <div>
-                        <h2 className="text-2xl font-black text-gray-800">Orders Moderation Panel</h2>
-                        <p className="text-xs text-gray-400 mt-1">Monitor sales metrics, search customer orders, and perform administrative status overrides.</p>
+                        <h2 className="text-2xl font-black text-gray-800">{t("ordersModeration")}</h2>
+                        <p className="text-xs text-gray-400 mt-1">{t("ordersModDesc")}</p>
                       </div>
                     </div>
 
@@ -540,7 +540,7 @@ export default function AdminPortal() {
                           <Coins size={24} />
                         </div>
                         <div>
-                          <span className="text-xs text-gray-400 font-semibold block">Total Revenue</span>
+                          <span className="text-xs text-gray-400 font-semibold block">{t("totalRevenue")}</span>
                           <span className="text-xl font-black text-gray-800">₹{totalSales.toFixed(2)}</span>
                         </div>
                       </div>
@@ -550,7 +550,7 @@ export default function AdminPortal() {
                           <TrendingUp size={24} />
                         </div>
                         <div>
-                          <span className="text-xs text-gray-400 font-semibold block">Completed Shipments</span>
+                          <span className="text-xs text-gray-400 font-semibold block">{t("completedShipments")}</span>
                           <span className="text-xl font-black text-gray-800">{completedCount} orders</span>
                         </div>
                       </div>
@@ -560,7 +560,7 @@ export default function AdminPortal() {
                           <TrendingDown size={24} />
                         </div>
                         <div>
-                          <span className="text-xs text-gray-400 font-semibold block">Cancelled / Rejected</span>
+                          <span className="text-xs text-gray-400 font-semibold block">{t("cancelledRejected")}</span>
                           <span className="text-xl font-black text-gray-800">{cancelledCount} orders</span>
                         </div>
                       </div>
@@ -570,7 +570,7 @@ export default function AdminPortal() {
                           <ShoppingBag size={24} />
                         </div>
                         <div>
-                          <span className="text-xs text-gray-400 font-semibold block">Total Order Volume</span>
+                          <span className="text-xs text-gray-400 font-semibold block">{t("totalOrderVolume")}</span>
                           <span className="text-xl font-black text-gray-800">{orders.length} orders</span>
                         </div>
                       </div>
@@ -582,7 +582,7 @@ export default function AdminPortal() {
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input
                           type="text"
-                          placeholder="Search orders (ID, buyer, seller...)"
+                          placeholder={t("searchOrdersPlaceholder")}
                           value={orderSearchQuery}
                           onChange={(e) => setOrderSearchQuery(e.target.value)}
                           className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-10 pr-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white"
@@ -591,20 +591,20 @@ export default function AdminPortal() {
 
                       <div className="flex items-center gap-2 w-full md:w-auto shrink-0 justify-end">
                         <SlidersHorizontal size={14} className="text-gray-450" />
-                        <span className="text-xs text-gray-500 font-bold uppercase">Filter:</span>
+                        <span className="text-xs text-gray-500 font-bold uppercase">{t("filterLabel")}:</span>
                         <select
                           value={orderStatusFilter}
                           onChange={(e) => setOrderStatusFilter(e.target.value)}
                           className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 font-semibold cursor-pointer"
                         >
-                          <option value="All">All Statuses</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Confirmed">Confirmed</option>
-                          <option value="Packed">Packed</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Out for Delivery">Out for Delivery</option>
-                          <option value="Delivered">Delivered</option>
-                          <option value="Cancelled">Cancelled</option>
+                          <option value="All">{t("allStatuses")}</option>
+                          <option value="Pending">{t("pendingOnly")}</option>
+                          <option value="Confirmed">{t("confirmedOnly")}</option>
+                          <option value="Packed">{t("packedOnly")}</option>
+                          <option value="Shipped">{t("shippedOnly")}</option>
+                          <option value="Out for Delivery">{t("outForDeliveryOnly")}</option>
+                          <option value="Delivered">{t("deliveredOnly")}</option>
+                          <option value="Cancelled">{t("cancelledOnly")}</option>
                         </select>
                       </div>
                     </div>

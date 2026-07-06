@@ -377,7 +377,7 @@ export default function CustomerPortal() {
         </header>
 
         {/* Dynamic customer tabs selector */}
-        <div className="bg-white border-b border-gray-100 px-8 py-1 flex gap-2 shrink-0">
+        <div className="bg-white border-b border-gray-100 px-6 md:px-8 py-1 flex gap-2 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
             onClick={() => setActiveTab("browse")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -387,7 +387,7 @@ export default function CustomerPortal() {
             }`}
           >
             <Store size={16} />
-            <span>Browse Products</span>
+            <span>{t("browseCatalog")}</span>
           </button>
           
           <button
@@ -399,14 +399,14 @@ export default function CustomerPortal() {
             }`}
           >
             <ShoppingBag size={16} />
-            <span>My Cart</span>
+            <span>{t("myCart")}</span>
             {cartItems.length > 0 && (
               <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
                 {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
               </span>
             )}
           </button>
-
+ 
           <button
             onClick={() => setActiveTab("wishlist")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -416,14 +416,14 @@ export default function CustomerPortal() {
             }`}
           >
             <Heart size={16} />
-            <span>Wishlist</span>
+            <span>{t("myWishlist")}</span>
             {wishlistIds.length > 0 && (
               <span className="bg-red-50 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
                 {wishlistIds.length}
               </span>
             )}
           </button>
-
+ 
           <button
             onClick={() => setActiveTab("orders")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -433,14 +433,14 @@ export default function CustomerPortal() {
             }`}
           >
             <ClipboardList size={16} />
-            <span>My Orders</span>
+            <span>{t("myOrders")}</span>
             {orders.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length > 0 && (
               <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
                 {orders.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length} active
               </span>
             )}
           </button>
-
+ 
           <button
             onClick={() => setActiveTab("recent")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm transition cursor-pointer ${
@@ -450,9 +450,9 @@ export default function CustomerPortal() {
             }`}
           >
             <Eye size={16} />
-            <span>Recently Viewed</span>
+            <span>{t("recentlyViewed")}</span>
           </button>
-
+ 
           {/* Seller Center Tab */}
           <div className="h-6 w-px bg-gray-200 self-center mx-2 shrink-0" />
           
@@ -465,7 +465,7 @@ export default function CustomerPortal() {
             }`}
           >
             <Store size={16} />
-            <span>Seller Center</span>
+            <span>{t("sellerCenter")}</span>
             {isSeller && incomingOrders.filter(o => o.orderStatus === "Pending").length > 0 && (
               <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
                 {incomingOrders.filter(o => o.orderStatus === "Pending").length} pending
@@ -514,29 +514,31 @@ export default function CustomerPortal() {
 
                     <div className="divide-y divide-gray-100">
                       {cartItems.map((item) => (
-                        <div key={item.product.id} className="py-4 flex gap-4 items-center">
-                          <img
-                            src={item.product.images?.[0]}
-                            alt={item.product.productName}
-                            className="w-16 h-16 object-cover rounded-xl border shrink-0"
-                          />
-                          
-                          <div className="flex-1 min-w-0">
-                            <h4
-                              onClick={() => setSelectedProduct(item.product)}
-                              className="font-bold text-gray-800 text-sm hover:text-green-600 cursor-pointer truncate"
-                            >
-                              {item.product.productName}
-                            </h4>
-                            <p className="text-xs text-gray-400 font-medium capitalize mt-0.5">
-                              Seller: {item.product.businessName} ({item.product.sellerType})
-                            </p>
-                            <p className="text-xs text-gray-400 font-medium">
-                              Unit Price: ₹{item.product.price.toFixed(2)}
-                            </p>
+                        <div key={item.product.id} className="py-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between w-full">
+                          <div className="flex gap-4 items-center w-full min-w-0">
+                            <img
+                              src={item.product.images?.[0]}
+                              alt={item.product.productName}
+                              className="w-16 h-16 object-cover rounded-xl border shrink-0"
+                            />
+                            
+                            <div className="flex-1 min-w-0">
+                              <h4
+                                onClick={() => setSelectedProduct(item.product)}
+                                className="font-bold text-gray-800 text-sm hover:text-green-600 cursor-pointer truncate"
+                              >
+                                {item.product.productName}
+                              </h4>
+                              <p className="text-xs text-gray-400 font-medium capitalize mt-0.5">
+                                Seller: {item.product.businessName} ({item.product.sellerType})
+                              </p>
+                              <p className="text-xs text-gray-400 font-medium">
+                                Unit Price: ₹{item.product.price.toFixed(2)}
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-6 shrink-0">
+                          <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 shrink-0">
                             {/* Quantity controls */}
                             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
                               <button

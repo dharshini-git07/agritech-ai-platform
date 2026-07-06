@@ -41,11 +41,11 @@ export default function ProductCard({
   return (
     <div className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-green-200 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
       {/* Product Image Panel */}
-      <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden shrink-0">
+      <div className="relative aspect-[4/3] bg-white overflow-hidden shrink-0 border-b border-gray-100">
         <img
           src={product.images?.[0] || "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80"}
           alt={product.productName}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
         />
 
         {/* Category Badge */}
