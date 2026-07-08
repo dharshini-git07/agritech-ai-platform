@@ -11,26 +11,36 @@ import {
   TrendingUp,
   LineChart,
   Home,
-  ShieldCheck
+  ShieldCheck,
+  Search,
+  SlidersHorizontal,
+  FileText
 } from "lucide-react";
+import { Order } from "@/types/order";
+import { Input } from "@/components/ui/input";
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<PlatformStats | null>(null);
+  const [ordersList, setOrdersList] = useState<Order[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadStats() {
+    async function loadStatsAndPoints() {
       try {
         const data = await AdminService.getPlatformStats();
         setStats(data);
+        const allOrders = await AdminService.getAllOrders();
+        setOrdersList(allOrders);
       } catch (err) {
         console.error("Failed to load platform stats:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadStats();
+    loadStatsAndPoints();
   }, []);
 
   if (loading) {
@@ -44,6 +54,21 @@ export default function AdminDashboard() {
   }
 
   if (!stats) return null;
+
+  // Filter transaction orders
+  const filteredOrders = ordersList.filter((ord) => {
+    const matchesSearch = 
+      ord.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ord.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ord.sellerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (ord.paymentId && ord.paymentId.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesStatus = 
+      statusFilter === "All" || 
+      ord.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
 
   const cardItems = [
     {
@@ -141,6 +166,93 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Admin Payment Transaction Logs */}
+      <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-4 border-b pb-4">
+          <div>
+            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+              <FileText className="text-green-700" size={20} />
+              <span>Payment Transaction Audit Logs</span>
+            </h3>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Monitor customer payments, transaction states, order methods, and gateway signatures.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-450" size={14} />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search orders or payment ID..."
+                className="pl-8.5 pr-3 py-1 bg-gray-50 border-gray-200 text-xs rounded-xl focus:border-green-400 w-52"
+              />
+            </div>
+            
+            <div className="flex items-center gap-1.5 bg-gray-50 border rounded-xl px-2 py-1 text-xs text-gray-600">
+              <SlidersHorizontal size={12} />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-transparent border-none font-bold text-gray-700 focus:outline-none cursor-pointer"
+              >
+                <option value="All">All Payments</option>
+                <option value="Paid">Paid Only</option>
+                <option value="Pending">Pending Only</option>
+                <option value="Failed">Failed Only</option>
+                <option value="Cancelled">Cancelled Only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {filteredOrders.length === 0 ? (
+          <p className="text-center py-8 text-gray-400 text-sm">No transaction matches found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b text-gray-400 uppercase font-bold tracking-wider">
+                  <th className="py-2.5 px-3">Order ID</th>
+                  <th className="py-2.5 px-3">Buyer Name</th>
+                  <th className="py-2.5 px-3">Seller Store</th>
+                  <th className="py-2.5 px-3">Method</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Reference ID</th>
+                  <th className="py-2.5 px-3 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-gray-700 font-medium">
+                {filteredOrders.map((ord) => (
+                  <tr key={ord.id} className="hover:bg-gray-50/50 transition">
+                    <td className="py-3 px-3 font-bold text-gray-900">#{ord.id?.slice(-6).toUpperCase()}</td>
+                    <td className="py-3 px-3">{ord.customerName}</td>
+                    <td className="py-3 px-3 text-green-750">{ord.sellerName}</td>
+                    <td className="py-3 px-3 capitalize">{ord.paymentMethod === "COD" ? "Cash" : "Razorpay"}</td>
+                    <td className="py-3 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                        ord.paymentStatus === "Paid" || ord.paymentStatus === "paid"
+                          ? "bg-green-50 border-green-200 text-green-700"
+                          : ord.paymentStatus === "Failed" || ord.paymentStatus === "failed"
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : "bg-amber-50 border-amber-200 text-amber-700"
+                      }`}>
+                        {ord.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 font-mono text-[10px] text-gray-400">{ord.paymentId || ord.razorpayOrderId || "N/A"}</td>
+                    <td className="py-3 px-3 text-right font-bold text-gray-900">₹{ord.totalAmount.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Platform density map removed */}
     </div>
   );
 }

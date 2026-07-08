@@ -192,6 +192,8 @@ export default function SellerForm({ onSuccess }: SellerFormProps) {
           />
         </div>
 
+        {/* Map location picker removed */}
+
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             {t("description")}

@@ -95,5 +95,56 @@ export const AdminService = {
   async updateUserSuspensionStatus(uid: string, suspended: boolean): Promise<void> {
     const docRef = doc(db, "users", uid);
     await updateDoc(docRef, { suspended });
+  },
+
+  async getDensityMapPoints(): Promise<any[]> {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const ordersSnap = await getDocs(collection(db, "orders"));
+
+    const points: any[] = [];
+
+    // 1. Sellers
+    usersSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (data.isSeller && data.sellerProfile) {
+        const profile = data.sellerProfile;
+        if (profile.latitude && profile.longitude) {
+          points.push({
+            lat: profile.latitude,
+            lng: profile.longitude,
+            title: profile.businessName || "Seller Shop",
+            description: `Type: ${profile.sellerType} | Address: ${profile.address}`,
+            type: profile.sellerType || "Farmer",
+          });
+        }
+      }
+    });
+
+    // 2. Orders (Delivery locations)
+    ordersSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (data.latitude && data.longitude) {
+        points.push({
+          lat: data.latitude,
+          lng: data.longitude,
+          title: `Order #${d.id.slice(-6).toUpperCase()}`,
+          description: `Total: ₹${data.totalAmount} | Status: ${data.orderStatus}`,
+          type: "Hydroponics Supplier", // Blue pins for orders
+        });
+      }
+    });
+
+    return points;
+  },
+
+  async getAllOrders(): Promise<Order[]> {
+    const snap = await getDocs(collection(db, "orders"));
+    return snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        ...data,
+      } as Order;
+    });
   }
 };

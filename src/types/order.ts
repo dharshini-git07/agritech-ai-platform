@@ -28,11 +28,16 @@ export interface Order {
   deliveryCharge: number;
   totalAmount: number;
   paymentMethod: PaymentMethod;
-  paymentStatus: "pending" | "paid" | "failed";
+  paymentStatus: "Pending" | "Paid" | "Failed" | "Refunded" | "Cancelled" | "pending" | "paid" | "failed";
   orderStatus: OrderStatus;
   deliveryAddress: string;
   contactNumber: string;
   notes?: string;
   createdAt?: any;
   updatedAt?: any;
+  latitude?: number;
+  longitude?: number;
+  paymentId?: string;
+  razorpayOrderId?: string;
+  paymentTimestamp?: any;
 }

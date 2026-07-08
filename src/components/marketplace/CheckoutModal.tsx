@@ -7,6 +7,7 @@ import { X, CreditCard, ShoppingBag, Landmark, Send, ClipboardList } from "lucid
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/common/LanguageContext";
+import { PaymentService } from "@/services/paymentService";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export default function CheckoutModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName || !deliveryAddress || !contactNumber) {
-      alert(t("selectImageAlert"));
+      alert("Please fill in all required fields.");
       return;
     }
 
@@ -65,21 +66,131 @@ export default function CheckoutModal({
     }
 
     setLoading(true);
+
     try {
-      await createOrdersFromCheckout(
-        user.uid,
-        {
-          customerName,
-          deliveryAddress,
-          contactNumber,
-          notes,
-          paymentMethod,
-        },
-        cartItems
-      );
-      alert(t("checkoutSuccessAlert"));
-      onSuccess();
-      onClose();
+      if (paymentMethod === "COD") {
+        // Direct cash on delivery order creation
+        await createOrdersFromCheckout(
+          user.uid,
+          {
+            customerName,
+            deliveryAddress,
+            contactNumber,
+            notes,
+            paymentMethod,
+            paymentStatus: "Pending",
+          },
+          cartItems
+        );
+        alert(t("checkoutSuccessAlert"));
+        onSuccess();
+        onClose();
+      } else {
+        // Razorpay integration flow
+        const scriptLoaded = await PaymentService.loadRazorpayScript();
+        if (!scriptLoaded) {
+          throw new Error("Unable to load Razorpay transaction modules. Check your connection.");
+        }
+
+        // Initialize backend session
+        const rzpSession = await PaymentService.createRazorpayOrder(user.uid, grandTotal);
+
+        const options = {
+          key: rzpSession.key || "rzp_test_placeholder",
+          amount: rzpSession.amount,
+          currency: rzpSession.currency,
+          name: "AgriTech AI Platform",
+          description: "Secure Checkout Payment",
+          order_id: rzpSession.id,
+          handler: async function (response: any) {
+            setLoading(true);
+            try {
+              const isVerified = await PaymentService.verifyPaymentSignature(
+                rzpSession.id,
+                response.razorpay_payment_id,
+                response.razorpay_signature
+              );
+
+              if (isVerified) {
+                await createOrdersFromCheckout(
+                  user.uid,
+                  {
+                    customerName,
+                    deliveryAddress,
+                    contactNumber,
+                    notes,
+                    paymentMethod: "Razorpay",
+                    paymentStatus: "Paid",
+                    paymentId: response.razorpay_payment_id,
+                    razorpayOrderId: rzpSession.id,
+                  },
+                  cartItems
+                );
+                alert("Payment secure & verified! Order placed successfully.");
+                onSuccess();
+                onClose();
+              } else {
+                throw new Error("Cryptographic verification returned invalid. Possible spoofing.");
+              }
+            } catch (err: any) {
+              alert("Payment verification error: " + err.message);
+            } finally {
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: customerName,
+            contact: contactNumber,
+            email: user.email || "",
+          },
+          theme: {
+            color: "#15803d",
+          },
+          modal: {
+            ondismiss: async function () {
+              setLoading(true);
+              try {
+                // Register Failed Order so customer can retry
+                await createOrdersFromCheckout(
+                  user.uid,
+                  {
+                    customerName,
+                    deliveryAddress,
+                    contactNumber,
+                    notes,
+                    paymentMethod: "Razorpay",
+                    paymentStatus: "Failed",
+                    razorpayOrderId: rzpSession.id,
+                  },
+                  cartItems
+                );
+                alert("Online payment checkout dismissed. Order generated as 'Failed'. You can retry paying in the 'My Orders' section.");
+                onSuccess();
+                onClose();
+              } catch (err: any) {
+                console.error("Failed to record cancelled order:", err);
+              } finally {
+                setLoading(false);
+              }
+            }
+          }
+        };
+
+        if (rzpSession.simulated) {
+          const proceed = confirm("SIMULATOR: Simulate successful verification payment check? (Click Cancel to simulate cancellation)");
+          if (proceed) {
+            options.handler({
+              razorpay_payment_id: `pay_sim_${Math.random().toString(36).substring(2, 11)}`,
+              razorpay_signature: "simulated_signature"
+            });
+          } else {
+            options.modal.ondismiss();
+          }
+        } else {
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+        }
+      }
     } catch (err: any) {
       alert(err.message || "Failed to place order.");
     } finally {
@@ -88,12 +199,12 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       {/* Backdrop */}
       <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
 
       {/* Checkout Dialog Panel */}
-      <div className="relative bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-150 p-8 grid md:grid-cols-5 gap-8 animate-in zoom-in-95 duration-250">
+      <div className="relative bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-150 p-8 animate-in zoom-in-95 duration-250 flex flex-col justify-between">
         
         {/* Close Button */}
         <button
@@ -103,16 +214,18 @@ export default function CheckoutModal({
           <X size={18} />
         </button>
 
-        {/* Column 1-3: Checkout details form */}
-        <form onSubmit={handleSubmit} className="md:col-span-3 space-y-5">
-          <div>
-            <h3 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
-              <ClipboardList className="text-green-700" size={24} />
-              <span>{t("myOrdersShipments")}</span>
-            </h3>
-            <p className="text-xs text-gray-400 mt-1">{t("addressDesc")}</p>
+        <div className="flex items-center gap-3.5 mb-6 mt-2">
+          <div className="p-3 bg-green-50 text-green-700 rounded-2xl">
+            <ShoppingBag size={24} />
           </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">Secure Checkout</h3>
+            <p className="text-xs text-gray-400">Complete details to finalize order.</p>
+          </div>
+        </div>
 
+        {/* Checkout details form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t("fullNamePlaceholder")} *</label>
@@ -150,6 +263,8 @@ export default function CheckoutModal({
               />
             </div>
 
+            {/* Location picker removed */}
+
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Order Notes (Optional)</label>
               <textarea
@@ -165,7 +280,11 @@ export default function CheckoutModal({
             <div className="space-y-2">
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">{t("paymentMethodLabel")}</label>
               <div className="grid grid-cols-2 gap-3">
-                <label className="flex items-center gap-3 p-3.5 border border-green-500 bg-green-50/50 rounded-xl cursor-pointer">
+                <label className={`flex items-center gap-3 p-3.5 border rounded-xl cursor-pointer transition ${
+                  paymentMethod === "COD" 
+                    ? "border-green-500 bg-green-50/50" 
+                    : "border-gray-150 hover:bg-gray-50"
+                }`}>
                   <input
                     type="radio"
                     name="payment"
@@ -178,13 +297,23 @@ export default function CheckoutModal({
                   </div>
                 </label>
  
-                {/* Placeholders for digital gateways */}
-                <div className="flex items-center gap-3 p-3.5 border border-gray-150 bg-gray-50 rounded-xl opacity-60 cursor-not-allowed">
-                  <input type="radio" name="payment" disabled className="w-4 h-4 cursor-not-allowed" />
+                <label className={`flex items-center gap-3 p-3.5 border rounded-xl cursor-pointer transition ${
+                  paymentMethod === "Razorpay" 
+                    ? "border-green-500 bg-green-50/50" 
+                    : "border-gray-150 hover:bg-gray-50"
+                }`}>
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={paymentMethod === "Razorpay"}
+                    onChange={() => setPaymentMethod("Razorpay")}
+                    className="w-4 h-4 text-green-600 focus:ring-green-500 cursor-pointer"
+                  />
                   <div>
-                    <p className="text-sm font-bold text-gray-500">{t("onlinePaymentLabel")}</p>
+                    <p className="text-sm font-bold text-gray-800">{t("onlinePaymentLabel")}</p>
+                    <p className="text-[10px] text-gray-400">Cards, UPI, NetBanking</p>
                   </div>
-                </div>
+                </label>
               </div>
             </div>
           </div>

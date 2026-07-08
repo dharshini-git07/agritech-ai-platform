@@ -6,6 +6,8 @@ export interface SellerProfile {
   address: string;
   contactNumber: string;
   rating: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Product {
@@ -25,6 +27,8 @@ export interface Product {
   availability: 'in_stock' | 'out_of_stock';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   createdAt?: any;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface CartItem {

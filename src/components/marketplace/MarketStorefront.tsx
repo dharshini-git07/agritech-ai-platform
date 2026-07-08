@@ -6,7 +6,7 @@ import ProductFilter, { FilterValues } from "./ProductFilter";
 import ProductDetail from "./ProductDetail";
 import SellerProfileModal from "./SellerProfileModal";
 import { useLanguage } from "@/components/common/LanguageContext";
-import { Sparkles, Award, Truck, ShieldCheck, ShoppingBag } from "lucide-react";
+import { Sparkles, Award, Truck, ShieldCheck, ShoppingBag, MapPin } from "lucide-react";
 import { RecommendationEngineService } from "@/services/recommendationEngineService";
 import { auth } from "@/lib/firebase";
 
@@ -23,6 +23,10 @@ export default function MarketStorefront() {
   const [recommendationsMap, setRecommendationsMap] = useState<Record<string, any>>({});
   const [activeRecommendationTab, setActiveRecommendationTab] = useState<string>("all");
   const [activeSmartFilter, setActiveSmartFilter] = useState<string>("all");
+
+  // Location / Mapping states removed
+
+  // Geolocation mount effect removed
 
   useEffect(() => {
     const loadPersonalization = async () => {
@@ -240,11 +244,13 @@ export default function MarketStorefront() {
         return false;
       }
     }
+    // Distance Radius filter check removed
     return true;
   });
 
   // Sort products
   filteredProducts = [...filteredProducts].sort((a, b) => {
+
     // If an AI tab is active and user didn't request explicit price sorting, rank by suitability score
     if (
       (activeRecommendationTab === "recommended" ||
@@ -381,13 +387,12 @@ export default function MarketStorefront() {
 
         {/* Product Catalog Grid list */}
         <div className="flex-1 w-full space-y-4">
-          <div className="flex justify-between items-center text-sm text-gray-400 font-semibold px-1">
+          <div className="flex flex-wrap justify-between items-center text-sm text-gray-400 font-semibold px-1 gap-4">
             <span>Showing {filteredProducts.length} active listings</span>
-            {filters.category !== "All" && (
-              <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-100">
-                {filters.category} {filters.subcategory !== "All" && `> ${filters.subcategory}`}
-              </span>
-            )}
+            
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Radius and view options removed */}
+            </div>
           </div>
 
           {loadingProducts ? (

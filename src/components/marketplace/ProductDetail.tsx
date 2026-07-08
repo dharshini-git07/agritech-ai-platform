@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Product } from "@/types/marketplace";
 import { useMarketplace } from "./MarketplaceContext";
 import { useLanguage } from "@/components/common/LanguageContext";
-import { X, Award, MapPin, Store, CreditCard, ShoppingCart, Heart, ShieldCheck } from "lucide-react";
+import { X, Award, MapPin, Store, CreditCard, ShoppingCart, Heart, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+// Location services imports removed
 
 interface ProductDetailProps {
   product: Product;
@@ -17,6 +18,10 @@ export default function ProductDetail({ product, onClose, onViewSeller }: Produc
 
   const isOutOfStock = product.quantity <= 0 || product.availability === "out_of_stock";
   const favorited = isInWishlist(product.id!);
+
+  // Location states removed
+
+  // Location calculation effect removed
 
   const handleBuyNow = () => {
     alert("Buy Now (Placeholder): Order details generated. The seller will contact you for payment.");
@@ -99,18 +104,20 @@ export default function ProductDetail({ product, onClose, onViewSeller }: Produc
                         if (onViewSeller) onViewSeller(product.sellerId);
                         onClose();
                       }}
-                      className="font-bold text-green-600 hover:underline cursor-pointer"
+                      className="text-green-700 hover:underline cursor-pointer font-bold"
                     >
-                      {product.businessName} ({product.sellerType})
+                      {product.businessName}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-gray-455 flex items-center gap-1">
-                    <MapPin size={13} /> Location:
+
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-450 flex items-center gap-1">
+                    <MapPin size={13} /> {t("location")}:
                   </span>
-                  <span className="text-gray-850 font-bold">{product.location}</span>
+                  <span className="font-semibold text-gray-700">{product.location || "N/A"}</span>
                 </div>
+
                 <div className="flex justify-between">
                   <span className="text-gray-455">Available Stock:</span>
                   <span className={`font-bold ${isOutOfStock ? "text-red-500" : "text-gray-800"}`}>

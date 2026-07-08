@@ -702,6 +702,10 @@ export default function CustomerPortal() {
                       order={ord}
                       role="customer"
                       onCancel={handleOrderCancel}
+                      onRetrySuccess={() => {
+                        const user = auth.currentUser;
+                        if (user) loadCustomerOrdersData(user.uid);
+                      }}
                     />
                   ))}
                 </div>

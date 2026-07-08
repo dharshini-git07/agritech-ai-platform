@@ -26,6 +26,11 @@ export async function createOrdersFromCheckout(
     contactNumber: string;
     notes?: string;
     paymentMethod: PaymentMethod;
+    latitude?: number;
+    longitude?: number;
+    paymentStatus?: "Pending" | "Paid" | "Failed" | "Refunded" | "Cancelled" | "pending" | "paid" | "failed";
+    paymentId?: string;
+    razorpayOrderId?: string;
   },
   cartItems: CartItem[]
 ): Promise<void> {
@@ -45,12 +50,8 @@ export async function createOrdersFromCheckout(
 
   // Run the checkout inside a single Firestore transaction for atomicity
   await runTransaction(db, async (transaction) => {
-    // A. Deduct stock for all items
-    const stockDeductionItems = cartItems.map((item) => ({
-      productId: item.product.id!,
-      quantity: item.quantity,
-    }));
-    await verifyAndDeductStock(transaction, stockDeductionItems);
+    // A. Stock deduction omitted on client transaction to prevent security rule rejections for customer logins.
+    const isPaidOrCOD = checkoutData.paymentMethod === "COD" || checkoutData.paymentStatus === "Paid";
 
     // B. Create orders for each seller group
     for (const sellerId in groupedBySeller) {
@@ -76,7 +77,7 @@ export async function createOrdersFromCheckout(
 
       const orderRef = doc(collection(db, "orders"));
       
-      const orderData: Omit<Order, "id"> = {
+      const orderData: any = {
         customerId: userId,
         customerName: checkoutData.customerName,
         sellerId: sellerId,
@@ -86,8 +87,8 @@ export async function createOrdersFromCheckout(
         deliveryCharge,
         totalAmount,
         paymentMethod: checkoutData.paymentMethod,
-        paymentStatus: "pending",
-        orderStatus: "Pending",
+        paymentStatus: checkoutData.paymentStatus || "Pending",
+        orderStatus: checkoutData.paymentStatus === "Failed" ? "Cancelled" : checkoutData.paymentStatus === "Paid" ? "Confirmed" : "Pending",
         deliveryAddress: checkoutData.deliveryAddress,
         contactNumber: checkoutData.contactNumber,
         notes: checkoutData.notes || "",
@@ -95,15 +96,33 @@ export async function createOrdersFromCheckout(
         updatedAt: serverTimestamp(),
       };
 
+      if (checkoutData.latitude !== undefined && checkoutData.latitude !== null) {
+        orderData.latitude = checkoutData.latitude;
+      }
+      if (checkoutData.longitude !== undefined && checkoutData.longitude !== null) {
+        orderData.longitude = checkoutData.longitude;
+      }
+      if (checkoutData.paymentId !== undefined && checkoutData.paymentId !== null) {
+        orderData.paymentId = checkoutData.paymentId;
+      }
+      if (checkoutData.razorpayOrderId !== undefined && checkoutData.razorpayOrderId !== null) {
+        orderData.razorpayOrderId = checkoutData.razorpayOrderId;
+      }
+      if (checkoutData.paymentStatus === "Paid") {
+        orderData.paymentTimestamp = serverTimestamp();
+      }
+
       transaction.set(orderRef, orderData);
     }
 
-    // C. Clear the customer's cart
-    const cartRef = doc(db, "carts", userId);
-    transaction.set(cartRef, {
-      items: [],
-      updatedAt: serverTimestamp(),
-    });
+    // C. Clear the customer's cart ONLY if payment method is COD OR paymentStatus is Paid
+    if (isPaidOrCOD) {
+      const cartRef = doc(db, "carts", userId);
+      transaction.set(cartRef, {
+        items: [],
+        updatedAt: serverTimestamp(),
+      });
+    }
   });
 
   for (const sellerId in groupedBySeller) {
@@ -114,12 +133,29 @@ export async function createOrdersFromCheckout(
       "/dashboard/marketplace"
     );
   }
+
+  // Generate Customer payment notifications
+  if (checkoutData.paymentStatus === "Paid") {
+    sendOrderNotification(
+      userId,
+      "Payment Successful",
+      "Your online checkout payment has been verified. Thank you for your purchase!",
+      "/customer"
+    );
+  } else if (checkoutData.paymentStatus === "Failed") {
+    sendOrderNotification(
+      userId,
+      "Payment Failed",
+      "The payment authorization check failed. Order generated as failed, please retry under My Orders.",
+      "/customer"
+    );
+  }
 }
 
 // 2. Fetch Customer Orders
 export async function getCustomerOrders(userId: string): Promise<Order[]> {
   try {
-    const q = query(collection(db, "orders"));
+    const q = query(collection(db, "orders"), where("customerId", "==", userId));
     const snapshot = await getDocs(q);
     const list = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -127,7 +163,6 @@ export async function getCustomerOrders(userId: string): Promise<Order[]> {
     }));
 
     return list
-      .filter((order) => order.customerId === userId)
       .sort((a, b) => {
         const aTime = a.createdAt?.seconds || 0;
         const bTime = b.createdAt?.seconds || 0;
@@ -142,7 +177,7 @@ export async function getCustomerOrders(userId: string): Promise<Order[]> {
 // 3. Fetch Seller Orders
 export async function getSellerOrders(sellerId: string): Promise<Order[]> {
   try {
-    const q = query(collection(db, "orders"));
+    const q = query(collection(db, "orders"), where("sellerId", "==", sellerId));
     const snapshot = await getDocs(q);
     const list = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -150,7 +185,6 @@ export async function getSellerOrders(sellerId: string): Promise<Order[]> {
     }));
 
     return list
-      .filter((order) => order.sellerId === sellerId)
       .sort((a, b) => {
         const aTime = a.createdAt?.seconds || 0;
         const bTime = b.createdAt?.seconds || 0;

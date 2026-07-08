@@ -63,6 +63,7 @@ export default function SellerDashboard() {
   // Orders Management
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [sellerOrderTab, setSellerOrderTab] = useState<"all" | "paid" | "pending">("all");
 
   // Buyer Orders
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
@@ -449,35 +450,77 @@ export default function SellerDashboard() {
           </div>
         )}
 
-        {activeTab === "orders" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800">Incoming Customer Orders</h3>
-            
-            {loadingOrders ? (
-              <div className="text-center py-10 text-gray-500">Loading incoming orders...</div>
-            ) : orders.length === 0 ? (
-              <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-gray-150 p-12 text-center text-gray-400 space-y-4">
-                <ShoppingBag size={48} className="mx-auto text-gray-300 opacity-80" />
-                <h3 className="font-bold text-lg text-gray-700">No orders received yet</h3>
-                <p className="text-sm">
-                  As customers purchase your catalog items, their shipments will show up here. You can manage status updates, accept, or cancel orders directly.
-                </p>
+        {activeTab === "orders" && (() => {
+          const filteredOrders = orders.filter((ord) => {
+            if (sellerOrderTab === "paid") {
+              return ord.paymentStatus === "Paid" || ord.paymentStatus === "paid";
+            }
+            if (sellerOrderTab === "pending") {
+              return ord.paymentStatus === "Pending" || ord.paymentStatus === "pending" || ord.paymentStatus === "Failed" || ord.paymentStatus === "failed";
+            }
+            return true;
+          });
+
+          return (
+            <div className="space-y-6">
+              <div className="flex flex-wrap justify-between items-center gap-4">
+                <h3 className="text-xl font-bold text-gray-800">Incoming Customer Orders</h3>
+                
+                {/* Payment status tab group selection */}
+                <div className="flex bg-white border border-gray-150 rounded-xl overflow-hidden shadow-2xs">
+                  <button
+                    onClick={() => setSellerOrderTab("all")}
+                    className={`px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      sellerOrderTab === "all" ? "bg-green-700 text-white" : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    All Orders
+                  </button>
+                  <button
+                    onClick={() => setSellerOrderTab("paid")}
+                    className={`px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      sellerOrderTab === "paid" ? "bg-green-700 text-white" : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Paid Orders
+                  </button>
+                  <button
+                    onClick={() => setSellerOrderTab("pending")}
+                    className={`px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      sellerOrderTab === "pending" ? "bg-green-700 text-white" : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Pending Payments
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {orders.map((ord) => (
-                  <OrderCard
-                    key={ord.id}
-                    order={ord}
-                    role="seller"
-                    onStatusChange={handleOrderStatusChange}
-                    onCancel={handleOrderCancel}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+              
+              {loadingOrders ? (
+                <div className="text-center py-10 text-gray-500">Loading incoming orders...</div>
+              ) : filteredOrders.length === 0 ? (
+                <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-gray-150 p-12 text-center text-gray-400 space-y-4">
+                  <ShoppingBag size={48} className="mx-auto text-gray-300 opacity-80" />
+                  <h3 className="font-bold text-lg text-gray-700">No orders received yet</h3>
+                  <p className="text-sm">
+                    As customers purchase your catalog items, their shipments will show up here. You can manage status updates, accept, or cancel orders directly.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {filteredOrders.map((ord) => (
+                    <OrderCard
+                      key={ord.id}
+                      order={ord}
+                      role="seller"
+                      onStatusChange={handleOrderStatusChange}
+                      onCancel={handleOrderCancel}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {activeTab === "profile" && (
           <SellerForm onSuccess={() => auth.currentUser && checkSellerStatus(auth.currentUser.uid)} />
