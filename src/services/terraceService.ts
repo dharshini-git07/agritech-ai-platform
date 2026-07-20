@@ -2,6 +2,7 @@ import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } f
 import { auth, db } from "@/lib/firebase";
 import { TerraceAnalysis } from "@/types/terrace";
 import { NotificationService } from "./notificationService";
+import { DigitalTwinService } from "./digitalTwinService";
 
 export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<string> {
   const user = auth.currentUser;
@@ -31,6 +32,13 @@ export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<st
     createdAt: serverTimestamp(),
   });
 
+  // Automatically generate and store corresponding Digital Twin layout
+  try {
+    await DigitalTwinService.generateAndSaveTwin(user.uid, docRef.id, analysis);
+  } catch (err) {
+    console.error("Failed to automatically generate Digital Twin on analysis completed:", err);
+  }
+
   try {
     await NotificationService.createNotification({
       userId: user.uid,
@@ -39,7 +47,7 @@ export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<st
       message: `AI terrace layout planning completed successfully for ${analysis.terraceArea || "N/A"} sq ft.`,
       type: "AI Recommendation",
       priority: "Medium",
-      actionUrl: "/dashboard/terrace-planner"
+      actionUrl: "/dashboard/digital-twin" // Redirect to Digital Twin page!
     });
   } catch (err) {
     console.error("Failed to create terrace analysis notification:", err);

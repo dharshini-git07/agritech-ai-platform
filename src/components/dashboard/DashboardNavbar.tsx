@@ -76,9 +76,10 @@ export default function DashboardNavbar() {
     router.push("/");
   };
 
-  let pageTitleKey: "dashboard" | "cropAnalysis" | "terracePlanner" | "history" | "hydroponics" | "marketplace" = "dashboard";
+  let pageTitleKey: "dashboard" | "cropAnalysis" | "terracePlanner" | "history" | "hydroponics" | "marketplace" | "digitalTwin" = "dashboard";
   if (pathname.includes("/crop-analysis")) pageTitleKey = "cropAnalysis";
   else if (pathname.includes("/terrace-planner")) pageTitleKey = "terracePlanner";
+  else if (pathname.includes("/digital-twin")) pageTitleKey = "digitalTwin";
   else if (pathname.includes("/history")) pageTitleKey = "history";
   else if (pathname.includes("/hydroponics")) pageTitleKey = "hydroponics";
   else if (pathname.includes("/marketplace")) pageTitleKey = "marketplace";
@@ -221,6 +222,9 @@ export default function DashboardNavbar() {
                 </Link>
                 <Link href="/dashboard/terrace-planner" className="block hover:text-green-200 py-1 font-semibold text-sm">
                   🏠 {t("terracePlanner")}
+                </Link>
+                <Link href="/dashboard/digital-twin" className="block hover:text-green-200 py-1 font-semibold text-sm">
+                  🌐 {t("digitalTwin")}
                 </Link>
                 <Link href="/dashboard/crop-analysis" className="block hover:text-green-200 py-1 font-semibold text-sm">
                   🌱 {t("cropAnalysis")}

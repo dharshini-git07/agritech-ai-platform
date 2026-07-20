@@ -23,6 +23,13 @@ export default function Sidebar() {
         </Link>
 
         <Link
+          href="/dashboard/digital-twin"
+          className="block hover:text-green-200"
+        >
+          🌐 {t("digitalTwin")}
+        </Link>
+
+        <Link
           href="/dashboard/crop-analysis"
           className="block hover:text-green-200"
         >
