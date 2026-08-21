@@ -11,6 +11,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import WeatherCard from "@/components/dashboard/WeatherCard";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import LiveCameraMonitoring from "@/components/dashboard/LiveCameraMonitoring";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -81,6 +82,9 @@ export default function Dashboard() {
           icon={Brain}
         />
       </div>
+
+      {/* Live Camera Monitoring Section */}
+      <LiveCameraMonitoring />
 
       <QuickActions />
 

@@ -12,11 +12,14 @@ import { RecoveryKitService } from "@/services/recoveryKitService";
 import { RecoveryKit } from "@/types/recoveryKit";
 import { auth } from "@/lib/firebase";
 import AiCropRecoveryKit from "./AiCropRecoveryKit";
+import WebcamScanner from "./WebcamScanner";
 
 export default function CropUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
   const { products: marketplaceProducts } = useMarketplace();
+
+  const [activeTab, setActiveTab] = useState<"upload" | "camera">("upload");
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -78,9 +81,7 @@ export default function CropUploader() {
 
       const data = await response.json();
 
-      console.log(data);
-
-      const result = JSON.parse(data.result);
+      const result = typeof data.result === "string" ? JSON.parse(data.result) : data.result;
 
       setAnalysis(result);
 
@@ -117,49 +118,83 @@ export default function CropUploader() {
 
   return (
     <div className="space-y-8">
-      <div
-        onClick={() => fileInputRef.current?.click()}
-        className="border-2 border-dashed border-green-400 rounded-3xl p-12 text-center cursor-pointer hover:bg-green-50 transition"
-      >
-        <h2 className="text-2xl font-bold">{t("uploadCropImage")}</h2>
-
-        <p className="text-gray-500 mt-3">{t("uploadCropDesc")}</p>
+      {/* Mode Switcher Tabs */}
+      <div className="flex border-b border-gray-150 gap-6">
+        <button
+          onClick={() => setActiveTab("upload")}
+          className={`pb-3 text-base font-bold transition-colors cursor-pointer ${
+            activeTab === "upload"
+              ? "border-b-2 border-green-600 text-green-700"
+              : "text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          📁 Upload Image
+        </button>
+        <button
+          onClick={() => setActiveTab("camera")}
+          className={`pb-3 text-base font-bold transition-colors cursor-pointer ${
+            activeTab === "camera"
+              ? "border-b-2 border-green-600 text-green-700"
+              : "text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          📷 Camera Scanner
+        </button>
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={handleImageChange}
-      />
+      {/* Tab 1: File Upload Mode */}
+      {activeTab === "upload" && (
+        <div className="space-y-8">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-green-400 rounded-3xl p-12 text-center cursor-pointer hover:bg-green-50 transition"
+          >
+            <h2 className="text-2xl font-bold">{t("uploadCropImage")}</h2>
+            <p className="text-gray-500 mt-3">{t("uploadCropDesc")}</p>
+          </div>
 
-      {selectedImage && (
-        <div className="space-y-6">
-          <Image
-            src={selectedImage}
-            alt="Crop Preview"
-            width={900}
-            height={600}
-            className="rounded-3xl w-full object-cover shadow-lg"
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleImageChange}
           />
 
-          <Button className="w-full" onClick={handleAnalyze}>
-            {t("analyzeCropButton")}
-          </Button>
+          {selectedImage && (
+            <div className="space-y-6">
+              <Image
+                src={selectedImage}
+                alt="Crop Preview"
+                width={900}
+                height={600}
+                className="rounded-3xl w-full object-cover shadow-lg max-h-[500px]"
+              />
 
-          {loading && (
-            <div className="bg-white rounded-3xl shadow-lg p-10 text-center">
-              <h2 className="text-2xl font-bold">{t("analyzingCropText")}</h2>
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl" onClick={handleAnalyze}>
+                {t("analyzeCropButton")}
+              </Button>
 
-              <p className="text-gray-500 mt-4">{t("analyzingCropDesc")}</p>
+              {loading && (
+                <div className="bg-white rounded-3xl shadow-lg p-10 text-center">
+                  <h2 className="text-2xl font-bold">{t("analyzingCropText")}</h2>
+                  <p className="text-gray-500 mt-4">{t("analyzingCropDesc")}</p>
+                </div>
+              )}
+
+              {showAnalysis && <CropAnalysisCard analysis={analysis} />}
+              {showAnalysis && recoveryKit && <AiCropRecoveryKit recoveryKit={recoveryKit} />}
             </div>
           )}
+        </div>
+      )}
 
-          {showAnalysis && <CropAnalysisCard analysis={analysis} />}
-          {showAnalysis && recoveryKit && <AiCropRecoveryKit recoveryKit={recoveryKit} />}
+      {/* Tab 2: Browser Camera Mode */}
+      {activeTab === "camera" && (
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-150">
+          <WebcamScanner />
         </div>
       )}
     </div>
   );
-}
+}
