@@ -32,6 +32,9 @@ export const NotificationService = {
       ...data,
       isRead: false,
       createdAt: serverTimestamp(),
+      timestampMs: Date.now(),
+      createdAtIso: new Date().toISOString(),
+      createdAtFormatted: new Date().toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }),
     });
     return docRef.id;
   },

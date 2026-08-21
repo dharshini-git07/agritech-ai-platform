@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
-import { getUserCropAnalyses } from "@/services/analysisService";
+import { getUserCropAnalyses, clearAllCropAnalyses } from "@/services/analysisService";
 import { getUserTerraceAnalyses } from "@/services/terraceService";
 import { useLanguage } from "@/components/common/LanguageContext";
+import { Button } from "@/components/ui/button";
 
 export default function AnalysisHistory() {
   const [history, setHistory] = useState<any[]>([]);
@@ -48,18 +49,52 @@ export default function AnalysisHistory() {
     return () => unsubscribe();
   }, []);
 
-  const formatTimestamp = (timestamp: any): string => {
+  const formatTimestamp = (item: any): string => {
+    if (!item) return "Just now";
+    if (item.analyzedAtFormatted) return item.analyzedAtFormatted;
+    if (item.createdAtFormatted) return item.createdAtFormatted;
+
+    const timestamp = item.createdAt || item.analyzedAt || item.timestampMs;
     if (!timestamp) return "Just now";
+
+    let dateObj: Date | null = null;
     if (typeof timestamp.toDate === "function") {
-      return timestamp.toDate().toLocaleDateString(undefined, {
+      dateObj = timestamp.toDate();
+    } else if (timestamp?.seconds) {
+      dateObj = new Date(timestamp.seconds * 1000);
+    } else if (typeof timestamp === "string" || typeof timestamp === "number") {
+      dateObj = new Date(timestamp);
+    }
+
+    if (dateObj && !isNaN(dateObj.getTime())) {
+      return dateObj.toLocaleString(undefined, {
         year: "numeric",
-        month: "long",
+        month: "short",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+        second: "2-digit",
       });
     }
-    return new Date(timestamp).toLocaleDateString();
+
+    return "Just now";
+  };
+
+  const handleClearCropAnalyses = async () => {
+    if (!confirm("Are you sure you want to delete all records from the crop_analysis collection?")) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const count = await clearAllCropAnalyses();
+      alert(`Deleted ${count} record(s). The crop_analysis collection will be recreated automatically on your next analysis.`);
+      setHistory((prev) => prev.filter((item) => item.type !== "crop"));
+    } catch (err: any) {
+      console.error("Failed to clear crop_analysis collection:", err);
+      alert("Error clearing collection: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -93,8 +128,26 @@ export default function AnalysisHistory() {
     );
   }
 
+  const hasCropRecords = history.some((item) => item.type === "crop");
+
   return (
     <div className="space-y-6">
+      {hasCropRecords && (
+        <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-200">
+          <div>
+            <h4 className="text-sm font-bold text-gray-800">🌱 Crop Health History</h4>
+            <p className="text-xs text-gray-500">Manage or reset crop_analysis collection documents</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={handleClearCropAnalyses}
+            className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 font-semibold rounded-xl"
+          >
+            🗑️ Clear Crop Analysis Collection
+          </Button>
+        </div>
+      )}
+
       {history.map((item) => {
         const isCrop = item.type === "crop";
         return (
@@ -113,27 +166,55 @@ export default function AnalysisHistory() {
                 {isCrop ? `🌱 ${t("cropAnalysis")}` : `🏠 ${t("terracePlanner")}`}
               </span>
               <span className="text-xs font-medium text-gray-400">
-                {formatTimestamp(item.createdAt)}
+                📅 {formatTimestamp(item)}
               </span>
             </div>
 
             {isCrop ? (
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {item.crop || t("notAvailable")}
-                </h2>
-                <p className="text-gray-650 text-sm">
-                  <strong>{t("healthLabel")}:</strong> {item.health || t("notAvailable")}
-                </p>
-                <p className="text-gray-650 text-sm">
-                  <strong>{t("diseaseLabel")}:</strong> {item.disease || t("notAvailable")}
-                </p>
-                <p className="text-gray-650 text-sm">
-                  <strong>{t("severityLabel")}:</strong> {item.severity || t("notAvailable")}
-                </p>
-                <p className="text-gray-650 text-sm">
-                  <strong>{t("recommendationLabel")}:</strong> {item.recommendation || t("notAvailable")}
-                </p>
+              <div className="space-y-3">
+                <div className="flex justify-between items-start">
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    {item.crop || item.cropName || t("notAvailable")}
+                  </h2>
+                  {item.confidence && (
+                    <span className="text-xs bg-gray-100 font-semibold px-2.5 py-1 rounded-full text-gray-700">
+                      🎯 {item.confidence}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <p className="text-gray-600">
+                    <strong>{t("healthLabel")}:</strong> {item.health || item.healthStatus || t("notAvailable")}
+                  </p>
+                  <p className="text-gray-600">
+                    <strong>{t("diseaseLabel")}:</strong> <span className={item.disease && item.disease !== "No visible disease" ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>{item.disease || t("notAvailable")}</span>
+                  </p>
+                  <p className="text-gray-600">
+                    <strong>{t("severityLabel")}:</strong> {item.severity || t("notAvailable")}
+                  </p>
+                  <p className="text-gray-600">
+                    <strong>Recovery Time:</strong> {item.recoveryTime || t("notAvailable")}
+                  </p>
+                </div>
+
+                {item.cause && (
+                  <p className="text-gray-600 text-sm">
+                    <strong>{t("causeLabel")}:</strong> {item.cause}
+                  </p>
+                )}
+
+                {item.recommendation && (
+                  <p className="text-gray-600 text-sm">
+                    <strong>{t("recommendationLabel")}:</strong> {item.recommendation}
+                  </p>
+                )}
+
+                {item.analysisSummary && (
+                  <div className="bg-green-50 rounded-2xl p-4 mt-2 text-sm text-green-900 leading-relaxed border border-green-100">
+                    <strong>📋 {t("aiSummaryLabel")}:</strong> {item.analysisSummary}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-2">

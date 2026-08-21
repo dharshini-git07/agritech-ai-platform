@@ -30,6 +30,11 @@ export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<st
     confidence: analysis.confidence,
     confidenceReason: analysis.confidenceReason,
     createdAt: serverTimestamp(),
+    timestampMs: Date.now(),
+    analyzedAt: new Date().toISOString(),
+    analyzedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+    analyzedTime: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+    analyzedAtFormatted: new Date().toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }),
   });
 
   // Automatically generate and store corresponding Digital Twin layout
@@ -56,16 +61,36 @@ export async function saveTerraceAnalysis(analysis: TerraceAnalysis): Promise<st
   return docRef.id;
 }
 
-export async function getUserTerraceAnalyses(uid: string): Promise<any[]> {
-  const q = query(
-    collection(db, "terrace_analysis"),
-    where("uid", "==", uid),
-    orderBy("createdAt", "desc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    type: "terrace",
-    ...doc.data(),
-  }));
+export async function getUserTerraceAnalyses(uid?: string): Promise<any[]> {
+  if (!uid) return [];
+  try {
+    const q = query(
+      collection(db, "terrace_analysis"),
+      where("uid", "==", uid),
+      orderBy("createdAt", "desc")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      type: "terrace",
+      ...doc.data(),
+    }));
+  } catch (err: any) {
+    console.warn("Ordered terrace analysis query failed (likely missing index), falling back to un-ordered query:", err);
+    const q = query(
+      collection(db, "terrace_analysis"),
+      where("uid", "==", uid)
+    );
+    const snapshot = await getDocs(q);
+    const docs = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      type: "terrace",
+      ...doc.data(),
+    }));
+    return docs.sort((a: any, b: any) => {
+      const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.timestampMs || 0);
+      const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.timestampMs || 0);
+      return timeB - timeA;
+    });
+  }
 }
