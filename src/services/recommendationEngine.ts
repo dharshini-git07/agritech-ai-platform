@@ -307,7 +307,7 @@ export class RecommendationEngine {
         estimatedPrice: neemOilMatch ? neemOilMatch.price : 180,
         suitabilityScore: 95,
         isAvailable: !!neemOilMatch,
-        productId: neemOilMatch?.id,
+        ...(neemOilMatch?.id !== undefined ? { productId: neemOilMatch.id } : {}),
         whyThisProduct: "Neem Oil serves as an excellent organic preventive shield to keep pests and insects away.",
       });
 
@@ -325,7 +325,7 @@ export class RecommendationEngine {
         estimatedPrice: vermiMatch ? vermiMatch.price : 120,
         suitabilityScore: 92,
         isAvailable: !!vermiMatch,
-        productId: vermiMatch?.id,
+        ...(vermiMatch?.id !== undefined ? { productId: vermiMatch.id } : {}),
         whyThisProduct: "Adding organic vermicompost boosts overall soil fertility and maintains robust plant immune defenses.",
       });
 
@@ -398,7 +398,7 @@ export class RecommendationEngine {
           estimatedPrice: neemMatch ? neemMatch.price : 199,
           suitabilityScore: 96,
           isAvailable: !!neemMatch,
-          productId: neemMatch?.id,
+          ...(neemMatch?.id !== undefined ? { productId: neemMatch.id } : {}),
           whyThisProduct: "Neem Oil controls soft-bodied insects, scales, and mites naturally without leaving chemical residues.",
         });
       }
@@ -419,7 +419,7 @@ export class RecommendationEngine {
           estimatedPrice: fungicideMatch ? fungicideMatch.price : 150,
           suitabilityScore: 94,
           isAvailable: !!fungicideMatch,
-          productId: fungicideMatch?.id,
+          ...(fungicideMatch?.id !== undefined ? { productId: fungicideMatch.id } : {}),
           whyThisProduct: "Bio Fungicide naturally combats fungal pathogens like root rots, leaf spots, and mildews in the soil and foliage.",
         });
       }
@@ -440,7 +440,7 @@ export class RecommendationEngine {
           estimatedPrice: vermiMatch ? vermiMatch.price * 2 : 240,
           suitabilityScore: 90,
           isAvailable: !!vermiMatch,
-          productId: vermiMatch?.id,
+          ...(vermiMatch?.id !== undefined ? { productId: vermiMatch.id } : {}),
           whyThisProduct: "Vermicompost improves soil structure, aeration, and replenishes micro/macro nutrients critical for post-disease recovery.",
         });
       }

@@ -30,8 +30,19 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — .env.example IS committed (safe placeholder template)
+.env.local
+.env*.local
+.env.development
+.env.production
+.env.test
+
+# service-account JSON and private keys — never commit these
+*serviceAccount*.json
+*service-account*.json
+*servicekey*.json
+*firebase-adminsdk*.json
+*.pem
 
 # vercel
 .vercel

@@ -1,6 +1,7 @@
 import { addDoc, collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { RecoveryKit } from "@/types/recoveryKit";
+import { omitUndefinedFields } from "@/services/firestorePayload";
 
 export class RecoveryKitService {
   /**
@@ -12,7 +13,7 @@ export class RecoveryKitService {
       throw new Error("User not authenticated.");
     }
 
-    const docRef = await addDoc(collection(db, "recovery_kits"), {
+    const recoveryKitDocument = omitUndefinedFields({
       uid: user.uid,
       cropAnalysisId: kit.cropAnalysisId,
       recommendations: kit.recommendations,
@@ -23,6 +24,7 @@ export class RecoveryKitService {
       createdAtIso: new Date().toISOString(),
       createdAtFormatted: new Date().toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }),
     });
+    const docRef = await addDoc(collection(db, "recovery_kits"), recoveryKitDocument);
 
     return docRef.id;
   }
